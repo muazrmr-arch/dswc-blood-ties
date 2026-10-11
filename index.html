@@ -1,10 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DSWC Blood Ties</title>
+
   <style>
     * { box-sizing: border-box; }
 
@@ -55,12 +55,13 @@
       font-weight: bold;
     }
 
-    input {
+    input, select {
       width: 100%;
       padding: 12px;
       border: 1px solid #ccd2d8;
       border-radius: 8px;
       font-size: 16px;
+      background: white;
     }
 
     button {
@@ -77,14 +78,24 @@
     }
 
     button:disabled { opacity: 0.6; }
+    button.secondary { background: #5d6872; }
 
-    button.secondary {
-      background: #5d6872;
-    }
-
-    #status {
+    #status, #search-status {
       line-height: 1.6;
       overflow-wrap: anywhere;
+    }
+
+    .donor-card {
+      border: 1px solid #e0e4e8;
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .donor-card h3 {
+      margin-top: 0;
+      color: #a71930;
     }
 
     footer {
@@ -113,8 +124,9 @@
       </p>
 
       <div class="notice">
-        Donor contact information is private and intended
-        only for authorized members.
+        Donor information is intended only for authorized
+        members. Always confirm availability before arranging
+        a donation.
       </div>
     </section>
 
@@ -124,59 +136,37 @@
 
       <form id="login-form">
         <label for="email">Email address</label>
-        <input
-          id="email"
-          type="email"
-          autocomplete="username"
-          required
-          placeholder="Enter your email"
-        >
+        <input id="email" type="email"
+          autocomplete="username" required
+          placeholder="Enter your email">
 
         <label for="password">Password</label>
-        <input
-          id="password"
-          type="password"
-          autocomplete="current-password"
-          required
-          placeholder="Enter your password"
-        >
+        <input id="password" type="password"
+          autocomplete="current-password" required
+          placeholder="Enter your password">
 
         <button id="login-button" type="submit">
           Sign In
         </button>
       </form>
 
-      <button
-        id="forgot-password-button"
-        type="button"
-        class="secondary"
-      >
+      <button id="forgot-password-button"
+        type="button" class="secondary">
         Forgot Password?
       </button>
 
       <form id="new-password-form" hidden>
         <h2>Set New Password</h2>
-        <p>Enter a new password for your account.</p>
 
         <label for="new-password">New password</label>
-        <input
-          id="new-password"
-          type="password"
-          autocomplete="new-password"
-          minlength="8"
-          required
-          placeholder="At least 8 characters"
-        >
+        <input id="new-password" type="password"
+          autocomplete="new-password" minlength="8"
+          required placeholder="At least 8 characters">
 
         <label for="confirm-password">Confirm new password</label>
-        <input
-          id="confirm-password"
-          type="password"
-          autocomplete="new-password"
-          minlength="8"
-          required
-          placeholder="Enter the password again"
-        >
+        <input id="confirm-password" type="password"
+          autocomplete="new-password" minlength="8"
+          required placeholder="Enter the password again">
 
         <button id="update-password-button" type="submit">
           Update Password
@@ -190,6 +180,41 @@
         <button id="logout-button" type="button">
           Sign Out
         </button>
+      </div>
+
+      <div id="donor-search" hidden>
+        <hr>
+        <h2>Find a Blood Donor</h2>
+        <p>Search donors in the DCIMC community.</p>
+
+        <label for="search-blood-group">Blood Group</label>
+        <select id="search-blood-group">
+          <option value="">All blood groups</option>
+          <option value="A+">A+</option>
+          <option value="A-">A-</option>
+          <option value="B+">B+</option>
+          <option value="B-">B-</option>
+          <option value="AB+">AB+</option>
+          <option value="AB-">AB-</option>
+          <option value="O+">O+</option>
+          <option value="O-">O-</option>
+        </select>
+
+        <label for="search-area">Area</label>
+        <input id="search-area" type="text"
+          placeholder="Enter area or location">
+
+        <label for="search-name">Donor Name</label>
+        <input id="search-name" type="text"
+          placeholder="Enter donor name">
+
+        <button id="search-button" type="button">
+          Search Donors
+        </button>
+
+        <p id="search-status" role="status"
+          aria-live="polite"></p>
+        <div id="donor-results"></div>
       </div>
     </section>
   </main>
@@ -221,16 +246,25 @@
       document.getElementById("new-password-form");
     const updatePasswordButton =
       document.getElementById("update-password-button");
+    const donorSearch = document.getElementById("donor-search");
+    const searchButton = document.getElementById("search-button");
+    const searchStatus = document.getElementById("search-status");
+    const donorResults = document.getElementById("donor-results");
 
     let recoveryMode =
       window.location.hash.includes("type=recovery");
+    let currentUser = null;
 
     function showLogin(message) {
+      currentUser = null;
       form.hidden = false;
       resetButton.hidden = false;
       newPasswordForm.hidden = true;
       signedIn.hidden = true;
+      donorSearch.hidden = true;
       status.textContent = message || "";
+      donorResults.replaceChildren();
+      searchStatus.textContent = "";
     }
 
     async function verifyMember(user) {
@@ -257,15 +291,14 @@
         return;
       }
 
+      currentUser = user;
       form.hidden = true;
       resetButton.hidden = true;
       newPasswordForm.hidden = true;
       signedIn.hidden = false;
+      donorSearch.hidden = false;
       status.textContent = "Membership approval verified.";
-
-      memberInfo.textContent =
-        "Signed in as " + user.email +
-        ". Donor search is not available yet.";
+      memberInfo.textContent = "Signed in as " + user.email + ".";
     }
 
     form.addEventListener("submit", async function(event) {
@@ -280,15 +313,10 @@
           document.getElementById("password").value;
 
         const { data, error } =
-          await client.auth.signInWithPassword({
-            email: email,
-            password: password
-          });
+          await client.auth.signInWithPassword({ email, password });
 
         if (error) {
-          showLogin(
-            "Sign-in failed. Check your email and password."
-          );
+          showLogin("Sign-in failed. Check your email and password.");
         } else {
           await verifyMember(data.user);
         }
@@ -300,12 +328,10 @@
     });
 
     resetButton.addEventListener("click", async function() {
-      const email =
-        document.getElementById("email").value.trim();
+      const email = document.getElementById("email").value.trim();
 
       if (!email) {
-        status.textContent =
-          "Please enter your email address first.";
+        status.textContent = "Please enter your email address first.";
         document.getElementById("email").focus();
         return;
       }
@@ -317,85 +343,157 @@
         const redirectTo =
           window.location.origin + window.location.pathname;
 
-        const { error } =
-          await client.auth.resetPasswordForEmail(email, {
-            redirectTo: redirectTo
-          });
+        const { error } = await client.auth.resetPasswordForEmail(
+          email, { redirectTo }
+        );
 
-        if (error) {
-          status.textContent =
-            "Could not send reset email. Please try again later.";
-        } else {
-          status.textContent =
-            "If an account exists for this email, a password reset link will be sent. Check your inbox and spam folder.";
-        }
+        status.textContent = error
+          ? "Could not send reset email. Please try again later."
+          : "If an account exists for this email, a password reset link will be sent. Check your inbox and spam folder.";
       } catch (error) {
-        status.textContent =
-          "Something went wrong. Please try again.";
+        status.textContent = "Something went wrong. Please try again.";
       } finally {
         resetButton.disabled = false;
       }
     });
 
-    newPasswordForm.addEventListener(
-      "submit",
-      async function(event) {
-        event.preventDefault();
+    newPasswordForm.addEventListener("submit", async function(event) {
+      event.preventDefault();
 
-        const newPassword =
-          document.getElementById("new-password").value;
-        const confirmPassword =
-          document.getElementById("confirm-password").value;
+      const newPassword =
+        document.getElementById("new-password").value;
+      const confirmPassword =
+        document.getElementById("confirm-password").value;
 
-        if (newPassword.length < 8) {
-          status.textContent =
-            "Password must be at least 8 characters.";
-          return;
-        }
-
-        if (newPassword !== confirmPassword) {
-          status.textContent =
-            "The passwords do not match.";
-          return;
-        }
-
-        updatePasswordButton.disabled = true;
-        status.textContent = "Updating password...";
-
-        try {
-          const { error } = await client.auth.updateUser({
-            password: newPassword
-          });
-
-          if (error) {
-            status.textContent =
-              "Password update failed. Please reopen the reset link and try again.";
-          } else {
-            recoveryMode = false;
-            await client.auth.signOut();
-
-            window.history.replaceState(
-              {},
-              document.title,
-              window.location.pathname
-            );
-
-            document.getElementById("password").value = "";
-            document.getElementById("new-password").value = "";
-            document.getElementById("confirm-password").value = "";
-
-            showLogin(
-              "Password updated successfully. Please sign in with your new password."
-            );
-          }
-        } catch (error) {
-          status.textContent =
-            "Something went wrong. Please try again.";
-        } finally {
-          updatePasswordButton.disabled = false;
-        }
+      if (newPassword.length < 8) {
+        status.textContent = "Password must be at least 8 characters.";
+        return;
       }
-    );
+
+      if (newPassword !== confirmPassword) {
+        status.textContent = "The passwords do not match.";
+        return;
+      }
+
+      updatePasswordButton.disabled = true;
+      status.textContent = "Updating password...";
+
+      try {
+        const { error } = await client.auth.updateUser({
+          password: newPassword
+        });
+
+        if (error) {
+          status.textContent =
+            "Password update failed. Please reopen the reset link and try again.";
+        } else {
+          recoveryMode = false;
+          await client.auth.signOut();
+
+          window.history.replaceState(
+            {}, document.title, window.location.pathname
+          );
+
+          document.getElementById("password").value = "";
+          document.getElementById("new-password").value = "";
+          document.getElementById("confirm-password").value = "";
+
+          showLogin(
+            "Password updated successfully. Please sign in with your new password."
+          );
+        }
+      } catch (error) {
+        status.textContent = "Something went wrong. Please try again.";
+      } finally {
+        updatePasswordButton.disabled = false;
+      }
+    });
+
+    searchButton.addEventListener("click", async function() {
+      if (!currentUser) {
+        showLogin("Please sign in with an approved account.");
+        return;
+      }
+
+      searchButton.disabled = true;
+      searchStatus.textContent = "Searching donors...";
+      donorResults.replaceChildren();
+
+      try {
+        let query = client
+          .from("donors")
+          .select(
+            "full_name,blood_group,member_category,batch_or_department,area,availability_status,last_blood_donation_date"
+          )
+          .eq("active", true)
+          .eq("donor_consent_confirmed", true)
+          .eq("member_verified", true)
+          .order("full_name", { ascending: true })
+          .limit(100);
+
+        const bloodGroup =
+          document.getElementById("search-blood-group").value;
+        const area =
+          document.getElementById("search-area").value.trim();
+        const name =
+          document.getElementById("search-name").value.trim();
+
+        if (bloodGroup) query = query.eq("blood_group", bloodGroup);
+
+        if (area) query = query.ilike("area", "%" + area + "%");
+
+        if (name) query = query.ilike("full_name", "%" + name + "%");
+
+        const { data, error } = await query;
+
+        if (error) {
+          searchStatus.textContent =
+            "Search failed. Check database permissions and try again.";
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          searchStatus.textContent =
+            "No matching donors found. Try another blood group or area.";
+          return;
+        }
+
+        data.forEach(function(donor) {
+          const card = document.createElement("div");
+          card.className = "donor-card";
+
+          const title = document.createElement("h3");
+          title.textContent = donor.full_name || "Name unavailable";
+          card.appendChild(title);
+
+          function addLine(label, value) {
+            if (value === null || value === undefined || value === "") {
+              return;
+            }
+            const p = document.createElement("p");
+            p.textContent = label + ": " + value;
+            card.appendChild(p);
+          }
+
+          addLine("Blood Group", donor.blood_group);
+          addLine("Area", donor.area);
+          addLine("Category", donor.member_category);
+          addLine("Batch / Department", donor.batch_or_department);
+          addLine("Availability", donor.availability_status);
+          addLine("Last Donation Date", donor.last_blood_donation_date);
+
+          donorResults.appendChild(card);
+        });
+
+        searchStatus.textContent =
+          data.length + " donor(s) found.";
+      } catch (error) {
+        searchStatus.textContent =
+          "Something went wrong. Please try again.";
+      } finally {
+        searchButton.disabled = false;
+      }
+    });
 
     document.getElementById("logout-button")
       .addEventListener("click", async function() {
@@ -406,12 +504,20 @@
     client.auth.onAuthStateChange(function(event, session) {
       if (event === "PASSWORD_RECOVERY") {
         recoveryMode = true;
+        currentUser = null;
         form.hidden = true;
         resetButton.hidden = true;
         signedIn.hidden = true;
+        donorSearch.hidden = true;
         newPasswordForm.hidden = false;
         status.textContent =
           "Reset link verified. Enter your new password.";
+      }
+
+      if (event === "SIGNED_OUT") {
+        currentUser = null;
+        donorSearch.hidden = true;
+        signedIn.hidden = true;
       }
     });
 
@@ -420,8 +526,7 @@
         form.hidden = true;
         resetButton.hidden = true;
         newPasswordForm.hidden = false;
-        status.textContent =
-          "Enter a new password for your account.";
+        status.textContent = "Enter a new password for your account.";
         return;
       }
 
