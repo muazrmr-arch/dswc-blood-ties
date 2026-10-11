@@ -2,814 +2,476 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DSWC Blood Ties</title>
-
-  <style>
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f7f9fc;
-      color: #263238;
-    }
-
-    header {
-      background: #a71930;
-      color: white;
-      padding: 28px 18px;
-      text-align: center;
-    }
-
-    header h1 { margin: 0 0 10px; font-size: 28px; }
-    header p { margin: 0; line-height: 1.6; }
-
-    main {
-      max-width: 650px;
-      margin: 28px auto;
-      padding: 0 16px;
-    }
-
-    .card {
-      background: white;
-      padding: 24px;
-      border-radius: 14px;
-      box-shadow: 0 3px 14px #0000000d;
-      margin-bottom: 18px;
-    }
-
-    .card h2 { margin-top: 0; color: #a71930; }
-
-    .notice {
-      background: #fff3f3;
-      border-left: 4px solid #a71930;
-      padding: 12px;
-      line-height: 1.6;
-      font-size: 14px;
-    }
-
-    label {
-      display: block;
-      margin: 14px 0 6px;
-      font-weight: bold;
-      line-height: 1.5;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ccd2d8;
-      border-radius: 8px;
-      font-size: 16px;
-      background: white;
-    }
-
-    input[type="checkbox"] {
-      width: auto;
-      margin-right: 7px;
-    }
-
-    button {
-      width: 100%;
-      padding: 14px;
-      margin-top: 16px;
-      border: none;
-      border-radius: 8px;
-      background: #a71930;
-      color: white;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    button:disabled { opacity: 0.6; }
-    button.secondary { background: #5d6872; }
-
-    #status, #search-status, #application-status {
-      line-height: 1.6;
-      overflow-wrap: anywhere;
-    }
-
-    .donor-card {
-      border: 1px solid #e0e4e8;
-      border-radius: 10px;
-      padding: 14px;
-      margin-top: 12px;
-      overflow-wrap: anywhere;
-    }
-
-    .donor-card h3 {
-      margin-top: 0;
-      color: #a71930;
-    }
-
-    footer {
-      text-align: center;
-      padding: 20px;
-      color: #65727c;
-      font-size: 13px;
-    }
-
-    [hidden] { display: none !important; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DSWC Blood Ties</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f7f9fc;color:#263238}
+header{background:#a71930;color:white;padding:26px 16px;text-align:center}
+header h1{margin:0 0 8px}
+main{max-width:700px;margin:24px auto;padding:0 14px}
+.card{background:white;padding:20px;border-radius:14px;box-shadow:0 3px 14px #0000000d;margin-bottom:18px}
+h2{color:#a71930;margin-top:0}
+.notice{background:#fff3f3;border-left:4px solid #a71930;padding:12px;line-height:1.5}
+label{display:block;margin:13px 0 6px;font-weight:bold}
+input,select{width:100%;padding:12px;border:1px solid #ccd2d8;border-radius:8px;font-size:16px;background:white}
+input[type=checkbox]{width:auto}
+button{width:100%;padding:13px;margin-top:12px;border:0;border-radius:8px;background:#a71930;color:white;font-size:16px;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.6}
+button.secondary{background:#5d6872}
+button.reject{background:#5d6872}
+.status{line-height:1.6;overflow-wrap:anywhere}
+.donor-card{border:1px solid #e0e4e8;border-radius:10px;padding:14px;margin-top:12px;overflow-wrap:anywhere}
+.donor-card h3{margin-top:0;color:#a71930}
+.actions{display:flex;gap:10px}
+.actions button{flex:1}
+footer{text-align:center;padding:20px;color:#65727c;font-size:13px}
+[hidden]{display:none!important}
+</style>
 </head>
-
 <body>
-  <header>
-    <h1>DSWC Blood Ties</h1>
-    <p>Connecting blood donors across the DCIMC community</p>
-  </header>
-
-  <main>
-    <section class="card">
-      <h2>Welcome</h2>
-      <p>
-        A community initiative to connect blood donors
-        within the DCIMC community.
-      </p>
-
-      <div class="notice">
-        Donor information is intended only for authorized
-        members. Always confirm availability before arranging
-        a donation.
-      </div>
-    </section>
-
-    <!-- Donor Application -->
-    <section class="card">
-      <h2>Become a Blood Donor</h2>
-      <p>
-        DCIMC students, teachers, doctors and staff can apply
-        to join our donor community.
-      </p>
-
-      <div class="notice">
-        Your application will be reviewed by an administrator.
-        Your application does not automatically make you an
-        approved donor.
-      </div>
-
-      <form id="donor-application-form">
-        <label for="applicant-name">Full Name</label>
-        <input
-          id="applicant-name"
-          type="text"
-          maxlength="100"
-          autocomplete="name"
-          required
-          placeholder="Enter your full name"
-        >
-
-        <label for="applicant-blood-group">Blood Group</label>
-        <select id="applicant-blood-group" required>
-          <option value="">Select blood group</option>
-          <option value="A+">A+</option>
-          <option value="A-">A-</option>
-          <option value="B+">B+</option>
-          <option value="B-">B-</option>
-          <option value="AB+">AB+</option>
-          <option value="AB-">AB-</option>
-          <option value="O+">O+</option>
-          <option value="O-">O-</option>
-        </select>
-
-        <label for="applicant-phone">Phone Number</label>
-        <input
-          id="applicant-phone"
-          type="tel"
-          maxlength="20"
-          autocomplete="tel"
-          required
-          placeholder="Enter your phone number"
-        >
-
-        <label for="applicant-area">Current Area</label>
-        <input
-          id="applicant-area"
-          type="text"
-          maxlength="100"
-          required
-          placeholder="e.g. Mohammadpur, Dhaka"
-        >
-
-        <label for="applicant-category">
-          Your DCIMC Affiliation
-        </label>
-        <select id="applicant-category" required>
-          <option value="">Select your category</option>
-          <option value="Student">Student</option>
-          <option value="Teacher">Teacher</option>
-          <option value="Doctor">Doctor</option>
-          <option value="Staff">Staff</option>
-        </select>
-
-        <label for="applicant-details">
-          Batch / Department
-        </label>
-        <input
-          id="applicant-details"
-          type="text"
-          maxlength="100"
-          placeholder="e.g. DCIMC 15 / Medicine Department"
-        >
-
-        <label>
-          <input
-            id="applicant-consent"
-            type="checkbox"
-            required
-          >
-          I consent to submit my information for verification.
-          I understand that my phone number will be shared
-          with authorized members only if my donor application
-          is approved.
-        </label>
-
-        <button id="application-submit-button" type="submit">
-          Submit Donor Application
-        </button>
-      </form>
-
-      <p
-        id="application-status"
-        role="status"
-        aria-live="polite"
-      ></p>
-    </section>
-
-    <!-- Member Login -->
-    <section class="card">
-      <h2>Member Login</h2>
-      <p>Sign in using your approved account.</p>
-
-      <form id="login-form">
-        <label for="email">Email address</label>
-        <input
-          id="email"
-          type="email"
-          autocomplete="username"
-          required
-          placeholder="Enter your email"
-        >
-
-        <label for="password">Password</label>
-        <input
-          id="password"
-          type="password"
-          autocomplete="current-password"
-          required
-          placeholder="Enter your password"
-        >
-
-        <button id="login-button" type="submit">
-          Sign In
-        </button>
-      </form>
-
-      <button
-        id="forgot-password-button"
-        type="button"
-        class="secondary"
-      >
-        Forgot Password?
-      </button>
-
-      <form id="new-password-form" hidden>
-        <h2>Set New Password</h2>
-
-        <label for="new-password">New password</label>
-        <input
-          id="new-password"
-          type="password"
-          autocomplete="new-password"
-          minlength="8"
-          required
-          placeholder="At least 8 characters"
-        >
-
-        <label for="confirm-password">Confirm new password</label>
-        <input
-          id="confirm-password"
-          type="password"
-          autocomplete="new-password"
-          minlength="8"
-          required
-          placeholder="Enter the password again"
-        >
-
-        <button id="update-password-button" type="submit">
-          Update Password
-        </button>
-      </form>
-
-      <p id="status" role="status" aria-live="polite"></p>
-
-      <div id="signed-in" hidden>
-        <p id="member-info"></p>
-        <button id="logout-button" type="button">
-          Sign Out
-        </button>
-      </div>
-
-      <!-- Donor Search -->
-      <div id="donor-search" hidden>
-        <hr>
-        <h2>Find a Blood Donor</h2>
-        <p>Search donors in the DCIMC community.</p>
-
-        <label for="search-blood-group">Blood Group</label>
-        <select id="search-blood-group">
-          <option value="">All blood groups</option>
-          <option value="A+">A+</option>
-          <option value="A-">A-</option>
-          <option value="B+">B+</option>
-          <option value="B-">B-</option>
-          <option value="AB+">AB+</option>
-          <option value="AB-">AB-</option>
-          <option value="O+">O+</option>
-          <option value="O-">O-</option>
-        </select>
-
-        <label for="search-area">Area</label>
-        <input
-          id="search-area"
-          type="text"
-          placeholder="Enter area or location"
-        >
-
-        <label for="search-name">Donor Name</label>
-        <input
-          id="search-name"
-          type="text"
-          placeholder="Enter donor name"
-        >
-
-        <button id="search-button" type="button">
-          Search Donors
-        </button>
-
-        <p
-          id="search-status"
-          role="status"
-          aria-live="polite"
-        ></p>
-
-        <div id="donor-results"></div>
-      </div>
-    </section>
-  </main>
-
-  <footer>DSWC Blood Ties · DCIMC Community</footer>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <script>
-    const SUPABASE_URL =
-      "https://crvqhikvniqttlhugsla.supabase.co";
-
-    const SUPABASE_PUBLISHABLE_KEY =
-      "sb_publishable_FK2wlfxjjbYlBuBE0-mSQA_5_xyX5H3";
-
-    const client = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY
-    );
-
-    // Elements
-    const form = document.getElementById("login-form");
-    const status = document.getElementById("status");
-    const loginButton = document.getElementById("login-button");
-    const signedIn = document.getElementById("signed-in");
-    const memberInfo = document.getElementById("member-info");
-
-    const resetButton =
-      document.getElementById("forgot-password-button");
-
-    const newPasswordForm =
-      document.getElementById("new-password-form");
-
-    const updatePasswordButton =
-      document.getElementById("update-password-button");
-
-    const donorSearch =
-      document.getElementById("donor-search");
-
-    const searchButton =
-      document.getElementById("search-button");
-
-    const searchStatus =
-      document.getElementById("search-status");
-
-    const donorResults =
-      document.getElementById("donor-results");
-
-    const applicationForm =
-      document.getElementById("donor-application-form");
-
-    const applicationStatus =
-      document.getElementById("application-status");
-
-    const applicationSubmitButton =
-      document.getElementById("application-submit-button");
-
-    let recoveryMode =
-      window.location.hash.includes("type=recovery");
-
-    let currentUser = null;
-
-    // Donor application
-    applicationForm.addEventListener("submit", async function(event) {
-      event.preventDefault();
-
-      if (!document.getElementById("applicant-consent").checked) {
-        applicationStatus.textContent =
-          "Please provide consent before submitting.";
-        return;
-      }
-
-      const fullName =
-        document.getElementById("applicant-name").value.trim();
-
-      const bloodGroup =
-        document.getElementById("applicant-blood-group").value;
-
-      const phone =
-        document.getElementById("applicant-phone").value.trim();
-
-      const area =
-        document.getElementById("applicant-area").value.trim();
-
-      const memberCategory =
-        document.getElementById("applicant-category").value;
-
-      const details =
-        document.getElementById("applicant-details").value.trim();
-
-      if (!fullName || !bloodGroup || !phone || !area || !memberCategory) {
-        applicationStatus.textContent =
-          "Please complete all required fields.";
-        return;
-      }
-
-      if (!/^[+\d][\d\s()-]{5,19}$/.test(phone)) {
-        applicationStatus.textContent =
-          "Please enter a valid phone number.";
-        return;
-      }
-
-      applicationSubmitButton.disabled = true;
-      applicationStatus.textContent = "Submitting your application...";
-
-      try {
-        const { error } = await client
-          .from("donor_registration_requests")
-          .insert({
-            owner_user_id: null,
-            full_name: fullName,
-            blood_group: bloodGroup,
-            phone: phone,
-            area: area,
-            member_category: memberCategory,
-            batch_or_department: details || null,
-            consent_given: true,
-            status: "pending"
-          });
-
-        if (error) {
-          console.error("Donor application submission failed:", error);
-          applicationStatus.textContent =
-            "Application could not be submitted. Please try again later.";
-          return;
-        }
-
-        applicationForm.reset();
-
-        applicationStatus.textContent =
-          "Application submitted successfully! It is pending administrator review. Your details will not be listed as an approved donor until verified.";
-      } catch (error) {
-        console.error("Donor application error:", error);
-        applicationStatus.textContent =
-          "Something went wrong. Please try again later.";
-      } finally {
-        applicationSubmitButton.disabled = false;
-      }
+<header>
+<h1>DSWC Blood Ties</h1>
+<p>Connecting blood donors across the DCIMC community</p>
+</header>
+
+<main>
+<section class="card">
+<h2>Welcome</h2>
+<p>A community initiative to connect blood donors within the DCIMC community.</p>
+<div class="notice">Donor information is intended only for authorized members. Always confirm availability before arranging a donation.</div>
+</section>
+
+<section class="card">
+<h2>Become a Blood Donor</h2>
+<p>DCIMC students, teachers, doctors and staff can apply to join our donor community.</p>
+<div class="notice">Your application will be reviewed by an administrator before you appear in donor search.</div>
+<form id="application-form">
+<label for="app-name">Full Name</label>
+<input id="app-name" maxlength="100" autocomplete="name" required>
+
+<label for="app-blood">Blood Group</label>
+<select id="app-blood" required>
+<option value="">Select blood group</option>
+<option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+<option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+</select>
+
+<label for="app-phone">Phone Number</label>
+<input id="app-phone" type="tel" maxlength="20" autocomplete="tel" required>
+
+<label for="app-area">Current Area</label>
+<input id="app-area" maxlength="100" required placeholder="e.g. Mohammadpur, Dhaka">
+
+<label for="app-category">DCIMC Affiliation</label>
+<select id="app-category" required>
+<option value="">Select category</option>
+<option>Student</option><option>Teacher</option><option>Doctor</option><option>Staff</option>
+</select>
+
+<label for="app-details">Batch / Department</label>
+<input id="app-details" maxlength="100" placeholder="e.g. DCIMC 15 / Medicine">
+
+<label><input id="app-consent" type="checkbox" required>
+I consent to submit my information for verification. I understand my phone number will be available to authorized members if my application is approved.</label>
+
+<button id="app-submit" type="submit">Submit Donor Application</button>
+</form>
+<p id="app-status" class="status" role="status"></p>
+</section>
+
+<section class="card">
+<h2>Member Login</h2>
+<p>Sign in using your approved account.</p>
+<form id="login-form">
+<label for="email">Email address</label>
+<input id="email" type="email" autocomplete="username" required>
+<label for="password">Password</label>
+<input id="password" type="password" autocomplete="current-password" required>
+<button id="login-button" type="submit">Sign In</button>
+</form>
+<button id="forgot-button" class="secondary" type="button">Forgot Password?</button>
+
+<form id="new-password-form" hidden>
+<h2>Set New Password</h2>
+<label for="new-password">New password</label>
+<input id="new-password" type="password" minlength="8" autocomplete="new-password" required>
+<label for="confirm-password">Confirm new password</label>
+<input id="confirm-password" type="password" minlength="8" autocomplete="new-password" required>
+<button id="update-password-button" type="submit">Update Password</button>
+</form>
+
+<p id="status" class="status" role="status" aria-live="polite"></p>
+
+<div id="signed-in" hidden>
+<p id="member-info"></p>
+<button id="logout-button" class="secondary" type="button">Sign Out</button>
+
+<div id="donor-search" hidden>
+<hr>
+<h2>Find a Blood Donor</h2>
+<label for="search-blood">Blood Group</label>
+<select id="search-blood">
+<option value="">All blood groups</option>
+<option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+<option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+</select>
+<label for="search-area">Area</label>
+<input id="search-area" placeholder="Enter area or location">
+<label for="search-name">Donor Name</label>
+<input id="search-name" placeholder="Enter donor name">
+<button id="search-button" type="button">Search Donors</button>
+<p id="search-status" class="status" role="status"></p>
+<div id="donor-results"></div>
+</div>
+
+<!-- Admin panel: only displayed when database confirms admin status -->
+<div id="admin-panel" hidden>
+<hr>
+<h2>Administrator Panel</h2>
+<div class="notice">Pending applications are visible to authorized administrators only. Check applicant details before approving.</div>
+<button id="refresh-applications" type="button">Refresh Applications</button>
+<p id="admin-status" class="status" role="status" aria-live="polite"></p>
+<div id="application-results"></div>
+</div>
+</div>
+</section>
+</main>
+
+<footer>DSWC Blood Ties · DCIMC Community</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://crvqhikvniqttlhugsla.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_FK2wlfxjjbYlBuBE0-mSQA_5_xyX5H3";
+const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+
+const $=id=>document.getElementById(id);
+let currentUser=null;
+let isAdmin=false;
+let recoveryMode=window.location.hash.includes("type=recovery");
+
+function showLogin(message=""){
+  currentUser=null;
+  isAdmin=false;
+  $("login-form").hidden=false;
+  $("forgot-button").hidden=false;
+  $("new-password-form").hidden=true;
+  $("signed-in").hidden=true;
+  $("donor-search").hidden=true;
+  $("admin-panel").hidden=true;
+  $("status").textContent=message;
+  $("donor-results").replaceChildren();
+  $("application-results").replaceChildren();
+}
+
+async function verifyMember(user){
+  const {data,error}=await client.from("member_access")
+    .select("user_id").eq("user_id",user.id)
+    .eq("approved",true).maybeSingle();
+
+  if(error||!data){
+    await client.auth.signOut();
+    showLogin(error?"Could not verify membership. Try again later.":"Your account is not approved. Contact the administrator.");
+    return;
+  }
+
+  currentUser=user;
+  $("login-form").hidden=true;
+  $("forgot-button").hidden=true;
+  $("new-password-form").hidden=true;
+  $("signed-in").hidden=false;
+  $("donor-search").hidden=false;
+  $("member-info").textContent="Signed in as "+user.email+".";
+  $("status").textContent="Membership approval verified.";
+
+  // The database function checks the authenticated user's actual admin role.
+  const {data:adminResult,error:adminError}=await client.rpc("is_dswc_admin");
+  isAdmin=!adminError && adminResult===true;
+  $("admin-panel").hidden=!isAdmin;
+
+  if(isAdmin) await loadApplications();
+}
+
+$("application-form").addEventListener("submit",async e=>{
+  e.preventDefault();
+  if(!$("app-consent").checked){
+    $("app-status").textContent="Please provide consent before submitting.";
+    return;
+  }
+
+  const phone=$("app-phone").value.trim();
+  if(!/^[+\d][\d\s()-]{5,19}$/.test(phone)){
+    $("app-status").textContent="Please enter a valid phone number.";
+    return;
+  }
+
+  const btn=$("app-submit");
+  btn.disabled=true;
+  $("app-status").textContent="Submitting application...";
+
+  try{
+    const {error}=await client.from("donor_registration_requests").insert({
+      owner_user_id:null,
+      full_name:$("app-name").value.trim(),
+      blood_group:$("app-blood").value,
+      phone,
+      area:$("app-area").value.trim(),
+      member_category:$("app-category").value,
+      batch_or_department:$("app-details").value.trim()||null,
+      consent_given:true,
+      status:"pending"
     });
+    if(error){
+      console.error(error);
+      $("app-status").textContent="Application could not be submitted. Please try again later.";
+      return;
+    }
+    $("application-form").reset();
+    $("app-status").textContent="Application submitted successfully! It is pending administrator review.";
+  }catch(err){
+    console.error(err);
+    $("app-status").textContent="Something went wrong. Please try again.";
+  }finally{btn.disabled=false;}
+});
 
-    function showLogin(message) {
-      currentUser = null;
-      form.hidden = false;
-      resetButton.hidden = false;
-      newPasswordForm.hidden = true;
-      signedIn.hidden = true;
-      donorSearch.hidden = true;
-      status.textContent = message || "";
-      donorResults.replaceChildren();
-      searchStatus.textContent = "";
+$("login-form").addEventListener("submit",async e=>{
+  e.preventDefault();
+  $("login-button").disabled=true;
+  $("status").textContent="Signing in...";
+  try{
+    const {data,error}=await client.auth.signInWithPassword({
+      email:$("email").value.trim(),
+      password:$("password").value
+    });
+    if(error) showLogin("Sign-in failed. Check your email and password.");
+    else await verifyMember(data.user);
+  }catch(err){showLogin("Something went wrong. Please try again.");}
+  finally{$("login-button").disabled=false;}
+});
+
+$("forgot-button").addEventListener("click",async()=>{
+  const email=$("email").value.trim();
+  if(!email){$("status").textContent="Enter your email address first.";return;}
+  const btn=$("forgot-button");
+  btn.disabled=true;
+  try{
+    const redirectTo=window.location.origin+window.location.pathname;
+    const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo});
+    $("status").textContent=error?"Could not send reset email. Try again later.":"If an account exists, a reset link will be sent. Check your inbox and spam folder.";
+  }catch(err){$("status").textContent="Something went wrong. Please try again.";}
+  finally{btn.disabled=false;}
+});
+
+$("new-password-form").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const p=$("new-password").value;
+  if(p.length<8){$("status").textContent="Password must be at least 8 characters.";return;}
+  if(p!==$("confirm-password").value){$("status").textContent="Passwords do not match.";return;}
+  $("update-password-button").disabled=true;
+  try{
+    const {error}=await client.auth.updateUser({password:p});
+    if(error){$("status").textContent="Password update failed. Reopen the reset link and try again.";return;}
+    await client.auth.signOut();
+    history.replaceState({},document.title,location.pathname);
+    $("password").value="";
+    $("new-password").value="";
+    $("confirm-password").value="";
+    showLogin("Password updated. Please sign in with your new password.");
+  }catch(err){$("status").textContent="Something went wrong. Please try again.";}
+  finally{$("update-password-button").disabled=false;}
+});
+
+$("search-button").addEventListener("click",async()=>{
+  if(!currentUser){showLogin("Please sign in first.");return;}
+  const btn=$("search-button");
+  btn.disabled=true;
+  $("search-status").textContent="Searching...";
+  $("donor-results").replaceChildren();
+
+  try{
+    let q=client.from("donors")
+      .select("full_name,blood_group,member_category,batch_or_department,area,availability_status,last_blood_donation_date")
+      .eq("active",true)
+      .eq("donor_consent_confirmed",true)
+      .eq("member_verified",true)
+      .order("full_name",{ascending:true}).limit(100);
+
+    const blood=$("search-blood").value;
+    const area=$("search-area").value.trim();
+    const name=$("search-name").value.trim();
+    if(blood)q=q.eq("blood_group",blood);
+    if(area)q=q.ilike("area","%"+area+"%");
+    if(name)q=q.ilike("full_name","%"+name+"%");
+
+    const {data,error}=await q;
+    if(error){$("search-status").textContent="Search failed. Please try again.";return;}
+    if(!data||!data.length){$("search-status").textContent="No matching donors found.";return;}
+
+    data.forEach(d=>{
+      const card=document.createElement("div");
+      card.className="donor-card";
+      const h=document.createElement("h3");
+      h.textContent=d.full_name||"Name unavailable";
+      card.appendChild(h);
+      [
+        ["Blood Group",d.blood_group],
+        ["Area",d.area],
+        ["Category",d.member_category],
+        ["Batch / Department",d.batch_or_department],
+        ["Availability",d.availability_status],
+        ["Last Donation Date",d.last_blood_donation_date]
+      ].forEach(([label,value])=>{
+        if(value===null||value===undefined||value==="")return;
+        const p=document.createElement("p");
+        p.textContent=label+": "+value;
+        card.appendChild(p);
+      });
+      $("donor-results").appendChild(card);
+    });
+    $("search-status").textContent=data.length+" donor(s) found.";
+  }catch(err){$("search-status").textContent="Something went wrong. Please try again.";}
+  finally{btn.disabled=false;}
+});
+
+async function loadApplications(){
+  if(!currentUser||!isAdmin){
+    $("admin-status").textContent="Administrator access required.";
+    return;
+  }
+  $("admin-status").textContent="Loading pending applications...";
+  $("application-results").replaceChildren();
+  $("refresh-applications").disabled=true;
+
+  try{
+    const {data,error}=await client.from("donor_registration_requests")
+      .select("id,full_name,blood_group,phone,area,member_category,batch_or_department,created_at")
+      .eq("status","pending")
+      .order("created_at",{ascending:true})
+      .limit(100);
+
+    if(error){
+      console.error(error);
+      $("admin-status").textContent="Could not load applications. Check permissions and try again.";
+      return;
+    }
+    if(!data||!data.length){
+      $("admin-status").textContent="No pending applications.";
+      return;
     }
 
-    async function verifyMember(user) {
-      const { data, error } = await client
-        .from("member_access")
-        .select("user_id")
-        .eq("user_id", user.id)
-        .eq("approved", true)
-        .maybeSingle();
+    $("admin-status").textContent=data.length+" pending application(s).";
+    data.forEach(app=>{
+      const card=document.createElement("div");
+      card.className="donor-card";
+      const h=document.createElement("h3");
+      h.textContent=app.full_name;
+      card.appendChild(h);
 
-      if (error) {
-        await client.auth.signOut();
-        showLogin(
-          "Could not verify membership. Please try again later."
-        );
-        return;
-      }
-
-      if (!data) {
-        await client.auth.signOut();
-        showLogin(
-          "Your account is not approved. Please contact the administrator."
-        );
-        return;
-      }
-
-      currentUser = user;
-      form.hidden = true;
-      resetButton.hidden = true;
-      newPasswordForm.hidden = true;
-      signedIn.hidden = false;
-      donorSearch.hidden = false;
-      status.textContent = "Membership approval verified.";
-      memberInfo.textContent = "Signed in as " + user.email + ".";
-    }
-
-    // Member login
-    form.addEventListener("submit", async function(event) {
-      event.preventDefault();
-
-      loginButton.disabled = true;
-      status.textContent = "Signing in...";
-
-      try {
-        const email =
-          document.getElementById("email").value.trim();
-
-        const password =
-          document.getElementById("password").value;
-
-        const { data, error } =
-          await client.auth.signInWithPassword({ email, password });
-
-        if (error) {
-          showLogin("Sign-in failed. Check your email and password.");
-        } else {
-          await verifyMember(data.user);
-        }
-      } catch (error) {
-        showLogin("Something went wrong. Please try again.");
-      } finally {
-        loginButton.disabled = false;
-      }
-    });
-
-    // Password reset
-    resetButton.addEventListener("click", async function() {
-      const email =
-        document.getElementById("email").value.trim();
-
-      if (!email) {
-        status.textContent =
-          "Please enter your email address first.";
-
-        document.getElementById("email").focus();
-        return;
-      }
-
-      resetButton.disabled = true;
-      status.textContent = "Sending password reset email...";
-
-      try {
-        const redirectTo =
-          window.location.origin + window.location.pathname;
-
-        const { error } = await client.auth.resetPasswordForEmail(
-          email,
-          { redirectTo }
-        );
-
-        status.textContent = error
-          ? "Could not send reset email. Please try again later."
-          : "If an account exists for this email, a password reset link will be sent. Check your inbox and spam folder.";
-      } catch (error) {
-        status.textContent =
-          "Something went wrong. Please try again.";
-      } finally {
-        resetButton.disabled = false;
-      }
-    });
-
-    // Set new password
-    newPasswordForm.addEventListener("submit", async function(event) {
-      event.preventDefault();
-
-      const newPassword =
-        document.getElementById("new-password").value;
-
-      const confirmPassword =
-        document.getElementById("confirm-password").value;
-
-      if (newPassword.length < 8) {
-        status.textContent =
-          "Password must be at least 8 characters.";
-        return;
-      }
-
-      if (newPassword !== confirmPassword) {
-        status.textContent = "The passwords do not match.";
-        return;
-      }
-
-      updatePasswordButton.disabled = true;
-      status.textContent = "Updating password...";
-
-      try {
-        const { error } = await client.auth.updateUser({
-          password: newPassword
-        });
-
-        if (error) {
-          status.textContent =
-            "Password update failed. Please reopen the reset link and try again.";
-        } else {
-          recoveryMode = false;
-          await client.auth.signOut();
-
-          window.history.replaceState(
-            {},
-            document.title,
-            window.location.pathname
-          );
-
-          document.getElementById("password").value = "";
-          document.getElementById("new-password").value = "";
-          document.getElementById("confirm-password").value = "";
-
-          showLogin(
-            "Password updated successfully. Please sign in with your new password."
-          );
-        }
-      } catch (error) {
-        status.textContent =
-          "Something went wrong. Please try again.";
-      } finally {
-        updatePasswordButton.disabled = false;
-      }
-    });
-
-    // Search approved donors
-    searchButton.addEventListener("click", async function() {
-      if (!currentUser) {
-        showLogin("Please sign in with an approved account.");
-        return;
-      }
-
-      searchButton.disabled = true;
-      searchStatus.textContent = "Searching donors...";
-      donorResults.replaceChildren();
-
-      try {
-        let query = client
-          .from("donors")
-          .select(
-            "full_name,blood_group,member_category,batch_or_department,area,availability_status,last_blood_donation_date"
-          )
-          .eq("active", true)
-          .eq("donor_consent_confirmed", true)
-          .eq("member_verified", true)
-          .order("full_name", { ascending: true })
-          .limit(100);
-
-        const bloodGroup =
-          document.getElementById("search-blood-group").value;
-
-        const area =
-          document.getElementById("search-area").value.trim();
-
-        const name =
-          document.getElementById("search-name").value.trim();
-
-        if (bloodGroup) {
-          query = query.eq("blood_group", bloodGroup);
-        }
-
-        if (area) {
-          query = query.ilike("area", "%" + area + "%");
-        }
-
-        if (name) {
-          query = query.ilike("full_name", "%" + name + "%");
-        }
-
-        const { data, error } = await query;
-
-        if (error) {
-          searchStatus.textContent =
-            "Search failed. Check database permissions and try again.";
-          return;
-        }
-
-        if (!data || data.length === 0) {
-          searchStatus.textContent =
-            "No matching donors found. Try another blood group or area.";
-          return;
-        }
-
-        data.forEach(function(donor) {
-          const card = document.createElement("div");
-          card.className = "donor-card";
-
-          const title = document.createElement("h3");
-          title.textContent = donor.full_name || "Name unavailable";
-          card.appendChild(title);
-
-          function addLine(label, value) {
-            if (
-              value === null ||
-              value === undefined ||
-              value === ""
-            ) {
-              return;
-            }
-
-            const p = document.createElement("p");
-            p.textContent = label + ": " + value;
-            card.appendChild(p);
-          }
-
-          addLine("Blood Group", donor.blood_group);
-          addLine("Area", donor.area);
-          addLine("Category", donor.member_category);
-          addLine("Batch / Department", donor.batch_or_department);
-          addLine("Availability", donor.availability_status);
-          addLine("Last Donation Date", donor.last_blood_donation_date);
-
-          donorResults.appendChild(card);
-        });
-
-        searchStatus.textContent =
-          data.length + " donor(s) found.";
-      } catch (error) {
-        searchStatus.textContent =
-          "Something went wrong. Please try again.";
-      } finally {
-        searchButton.disabled = false;
-      }
-    });
-
-    // Sign out
-    document.getElementById("logout-button")
-      .addEventListener("click", async function() {
-        await client.auth.signOut();
-        showLogin("You have signed out.");
+      [
+        ["Blood Group",app.blood_group],
+        ["Phone",app.phone],
+        ["Area",app.area],
+        ["Affiliation",app.member_category],
+        ["Batch / Department",app.batch_or_department],
+        ["Submitted",app.created_at?new Date(app.created_at).toLocaleString():""]
+      ].forEach(([label,value])=>{
+        if(!value)return;
+        const p=document.createElement("p");
+        p.textContent=label+": "+value;
+        card.appendChild(p);
       });
 
-    // Password recovery and session handling
-    client.auth.onAuthStateChange(function(event, session) {
-      if (event === "PASSWORD_RECOVERY") {
-        recoveryMode = true;
-        currentUser = null;
-        form.hidden = true;
-        resetButton.hidden = true;
-        signedIn.hidden = true;
-        donorSearch.hidden = true;
-        newPasswordForm.hidden = false;
-        status.textContent =
-          "Reset link verified. Enter your new password.";
-      }
+      const actions=document.createElement("div");
+      actions.className="actions";
+      const approve=document.createElement("button");
+      approve.textContent="Approve";
+      const reject=document.createElement("button");
+      reject.textContent="Reject";
+      reject.className="reject";
 
-      if (event === "SIGNED_OUT") {
-        currentUser = null;
-        donorSearch.hidden = true;
-        signedIn.hidden = true;
-      }
+      approve.addEventListener("click",()=>processApplication(app.id,"approve",approve,reject));
+      reject.addEventListener("click",()=>processApplication(app.id,"reject",approve,reject));
+      actions.append(approve,reject);
+      card.appendChild(actions);
+      $("application-results").appendChild(card);
     });
+  }catch(err){
+    console.error(err);
+    $("admin-status").textContent="Could not load applications.";
+  }finally{$("refresh-applications").disabled=false;}
+}
 
-    (async function restoreSession() {
-      if (recoveryMode) {
-        form.hidden = true;
-        resetButton.hidden = true;
-        newPasswordForm.hidden = false;
-        status.textContent =
-          "Enter a new password for your account.";
-        return;
-      }
+async function processApplication(id,action,approveBtn,rejectBtn){
+  if(!currentUser||!isAdmin){
+    $("admin-status").textContent="Administrator access required.";
+    return;
+  }
 
-      const { data } = await client.auth.getSession();
+  if(action==="reject"&&!confirm("Reject this donor application?"))return;
+  if(action==="approve"&&!confirm("Approve this application and add the applicant to donor search?"))return;
 
-      if (data.session) {
-        await verifyMember(data.session.user);
-      }
-    })();
-  </script>
+  approveBtn.disabled=true;
+  rejectBtn.disabled=true;
+  $("admin-status").textContent=action==="approve"?"Approving application...":"Rejecting application...";
+
+  try{
+    const functionName=action==="approve"?"approve_donor_application":"reject_donor_application";
+    const {data,error}=await client.rpc(functionName,{application_id:id});
+    if(error){
+      console.error(error);
+      $("admin-status").textContent="Action failed: "+error.message;
+      return;
+    }
+    $("admin-status").textContent=typeof data==="string"?data:"Application updated.";
+    await loadApplications();
+  }catch(err){
+    console.error(err);
+    $("admin-status").textContent="Something went wrong. Please refresh and try again.";
+  }finally{
+    approveBtn.disabled=false;
+    rejectBtn.disabled=false;
+  }
+}
+
+$("refresh-applications").addEventListener("click",loadApplications);
+
+$("logout-button").addEventListener("click",async()=>{
+  await client.auth.signOut();
+  showLogin("You have signed out.");
+});
+
+client.auth.onAuthStateChange((event,session)=>{
+  if(event==="PASSWORD_RECOVERY"){
+    recoveryMode=true;
+    currentUser=null;
+    $("login-form").hidden=true;
+    $("forgot-button").hidden=true;
+    $("signed-in").hidden=true;
+    $("new-password-form").hidden=false;
+    $("status").textContent="Enter a new password for your account.";
+  }
+  if(event==="SIGNED_OUT"){
+    currentUser=null;
+    isAdmin=false;
+    $("signed-in").hidden=true;
+    $("admin-panel").hidden=true;
+    $("donor-search").hidden=true;
+  }
+});
+
+(async function restoreSession(){
+  if(recoveryMode){
+    $("login-form").hidden=true;
+    $("forgot-button").hidden=true;
+    $("new-password-form").hidden=false;
+    $("status").textContent="Enter a new password for your account.";
+    return;
+  }
+  const {data}=await client.auth.getSession();
+  if(data.session)await verifyMember(data.session.user);
+})();
+</script>
 </body>
 </html>
