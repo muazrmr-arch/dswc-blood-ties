@@ -23,7 +23,7 @@ input[type=checkbox]{width:auto}
 button{border:0;border-radius:7px;background:#a90024;color:white;padding:11px 14px;font-size:15px;cursor:pointer;margin:3px}
 button.secondary{background:#465569}
 button.danger{background:#7b1b29}
-button:disabled{opacity:.5}
+button:disabled{opacity:.5;cursor:not-allowed}
 label{font-size:14px;font-weight:600}
 .small{font-size:13px;color:#667085}
 .result{border:1px solid #e0e4ea;border-radius:9px;padding:13px;margin:10px 0;overflow-wrap:anywhere}
@@ -34,6 +34,7 @@ label{font-size:14px;font-weight:600}
 .hero h2{margin-bottom:8px}
 footer{text-align:center;color:#667085;padding:25px 12px;font-size:13px}
 hr{border:0;border-top:1px solid #e5e7eb;margin:20px 0}
+a{color:#a90024}
 </style>
 </head>
 <body>
@@ -52,7 +53,7 @@ hr{border:0;border-top:1px solid #e5e7eb;margin:20px 0}
 </nav>
 
 <main>
-<div id="notice" class="status hidden" role="status"></div>
+<div id="notice" class="status hidden" role="status" aria-live="polite"></div>
 
 <section id="page-home">
 <div class="hero">
@@ -86,7 +87,7 @@ hr{border:0;border-top:1px solid #e5e7eb;margin:20px 0}
 <p class="small">For DCIMC students, teachers, doctors and staff. Your member access may require administrator approval.</p>
 <form id="registerForm">
 <label>Full Name *</label>
-<input id="regName" required maxlength="120">
+<input id="regName" required maxlength="120" autocomplete="name">
 <label>Email *</label>
 <input id="regEmail" type="email" required autocomplete="email">
 <label>Password * (at least 8 characters)</label>
@@ -122,7 +123,7 @@ hr{border:0;border-top:1px solid #e5e7eb;margin:20px 0}
 <div id="recoveryBox" class="hidden">
 <hr>
 <h3>Set a New Password</h3>
-<input id="newPassword" type="password" minlength="8" placeholder="New password">
+<input id="newPassword" type="password" minlength="8" autocomplete="new-password" placeholder="New password">
 <button onclick="setNewPassword()">Update Password</button>
 </div>
 </div>
@@ -200,7 +201,7 @@ hr{border:0;border-top:1px solid #e5e7eb;margin:20px 0}
 <div id="pendingMembers"></div>
 <hr>
 <h3>Promote an Existing Member to Admin</h3>
-<p class="small">Enter the UUID of an existing member. Promote only trusted people. Never share this function with ordinary members.</p>
+<p class="small">Enter the UUID of an existing member. Promote only trusted people.</p>
 <label>Member User ID (UUID)</label>
 <input id="promoteUserId" placeholder="User UUID">
 <button onclick="promoteMember()">Approve as Admin</button>
@@ -221,9 +222,11 @@ hr{border:0;border-top:1px solid #e5e7eb;margin:20px 0}
 
 <script>
 const SUPABASE_URL = "https://crvqhikvniqttlhugsla.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_FK2wlfxjjbYlBuBE0-mSQA_5_xyXH3";
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
+/* Latest publishable key confirmed by you */
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_FK2wlfxjjbYlBuBE0-mSQA_5_xyX5H3";
+
+let db = null;
 let currentUser = null;
 let isAdmin = false;
 let approvedMember = false;
@@ -231,133 +234,227 @@ let recoveryMode = false;
 
 function msg(s) {
   const el = document.getElementById("notice");
-  el.textContent = s;
+  el.textContent = String(s);
   el.classList.remove("hidden");
   window.scrollTo({top:0,behavior:"smooth"});
 }
-function clearMsg(){document.getElementById("notice").classList.add("hidden")}
-function esc(v){
+function clearMsg() {
+  document.getElementById("notice").classList.add("hidden");
+}
+function esc(v) {
   return String(v ?? "").replace(/[&<>"']/g,c=>({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
   })[c]);
 }
-function showPage(name){
-  ["home","account","donors","profile","requests","admin"].forEach(p=>{
+function showPage(name) {
+  const allowed = ["home","account","donors","profile","requests","admin"];
+  if (!allowed.includes(name)) return;
+  if (name === "admin" && !isAdmin) {
+    msg("Administrator access is required.");
+    return;
+  }
+  allowed.forEach(p=>{
     document.getElementById("page-"+p).classList.toggle("hidden",p!==name);
   });
-  if(name==="admin" && !isAdmin) msg("Administrator access is required.");
   window.scrollTo({top:0,behavior:"smooth"});
 }
-async function refreshAccess(){
-  isAdmin=false;
-  approvedMember=false;
-  if(currentUser){
-    const {data,error}=await db.from("member_access")
+
+function friendlyError(error) {
+  const message = error?.message || String(error || "Unknown error");
+  if (/invalid api key|invalid api/i.test(message)) {
+    return "Supabase rejected the API key. Check that the publishable key in index.html exactly matches the key in your Supabase project's API Keys page.";
+  }
+  if (/failed to fetch|networkerror|fetch failed/i.test(message)) {
+    return "Could not connect to Supabase. Check your internet connection, Supabase project URL and whether the Supabase service is available.";
+  }
+  return message;
+}
+
+try {
+  if (!window.supabase || typeof window.supabase.createClient !== "function") {
+    throw new Error("Supabase JavaScript library did not load. Check your internet connection and reload the page.");
+  }
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+} catch (error) {
+  msg("Website setup error: " + friendlyError(error));
+}
+
+async function refreshAccess() {
+  isAdmin = false;
+  approvedMember = false;
+
+  if (currentUser && db) {
+    const {data,error} = await db.from("member_access")
       .select("approved,role,display_name,member_category")
-      .eq("user_id",currentUser.id).maybeSingle();
-    if(!error && data){
-      approvedMember=data.approved===true;
-      isAdmin=data.approved===true && data.role==="admin";
+      .eq("user_id",currentUser.id)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Member access check:", error);
+    } else if (data) {
+      approvedMember = data.approved === true;
+      isAdmin = data.approved === true && data.role === "admin";
     }
   }
+
   document.getElementById("adminNav").classList.toggle("hidden",!isAdmin);
   document.getElementById("logoutBtn").classList.toggle("hidden",!currentUser);
-  document.getElementById("accountInfo").textContent=currentUser
+  document.getElementById("accountInfo").textContent = currentUser
     ? "Signed in: "+currentUser.email+(approvedMember?" · Member approved":" · Pending member approval")
     : "You are not signed in.";
 }
 
 document.getElementById("registerForm").addEventListener("submit",async e=>{
-  e.preventDefault(); clearMsg();
-  const fullName=document.getElementById("regName").value.trim();
-  const email=document.getElementById("regEmail").value.trim();
-  const password=document.getElementById("regPassword").value;
-  const category=document.getElementById("regCategory").value;
-  const batch=document.getElementById("regBatch").value.trim();
-  if(!document.getElementById("regConsent").checked){msg("Please confirm the registration statement.");return;}
-  const {data,error}=await db.auth.signUp({
-    email,password,
-    options:{data:{
-      display_name:fullName,
-      member_category:category,
-      batch_or_department:batch
-    }}
-  });
-  if(error){msg("Registration failed: "+error.message);return;}
-  e.target.reset();
-  if(data.session){
-    currentUser=data.user;
-    await refreshAccess();
-    msg("Account created. Your member access is pending administrator approval.");
-  }else{
-    msg("Registration submitted. Check your email to confirm the account if email confirmation is enabled. Your member access may require administrator approval.");
+  e.preventDefault();
+  clearMsg();
+  if (!db) { msg("Supabase did not initialize. Reload the page and check the API key."); return; }
+
+  const fullName = document.getElementById("regName").value.trim();
+  const email = document.getElementById("regEmail").value.trim();
+  const password = document.getElementById("regPassword").value;
+  const category = document.getElementById("regCategory").value;
+  const batch = document.getElementById("regBatch").value.trim();
+
+  if (!document.getElementById("regConsent").checked) {
+    msg("Please confirm the registration statement.");
+    return;
+  }
+
+  const submitButton = e.submitter;
+  if (submitButton) submitButton.disabled = true;
+
+  try {
+    const {data,error} = await db.auth.signUp({
+      email,password,
+      options:{data:{
+        display_name:fullName,
+        member_category:category,
+        batch_or_department:batch
+      }}
+    });
+
+    if (error) {
+      msg("Registration failed: "+friendlyError(error));
+      return;
+    }
+
+    e.target.reset();
+
+    if (data.session) {
+      currentUser = data.user;
+      await refreshAccess();
+      msg("Account created. Your member access is pending administrator approval.");
+    } else {
+      msg("Registration submitted. Check your email to confirm the account if email confirmation is enabled. Your member access may require administrator approval.");
+    }
+  } catch (error) {
+    msg("Registration failed: "+friendlyError(error));
+  } finally {
+    if (submitButton) submitButton.disabled = false;
   }
 });
 
 document.getElementById("loginForm").addEventListener("submit",async e=>{
-  e.preventDefault(); clearMsg();
-  const email=document.getElementById("loginEmail").value.trim();
-  const password=document.getElementById("loginPassword").value;
-  const {data,error}=await db.auth.signInWithPassword({email,password});
-  if(error){msg("Sign in failed: "+error.message);return;}
-  currentUser=data.user;
-  await refreshAccess();
-  msg(approvedMember
-    ? "Sign in successful."
-    : "Sign in successful, but member access is pending approval. Contact an administrator.");
+  e.preventDefault();
+  clearMsg();
+  if (!db) { msg("Supabase did not initialize. Reload the page and check the API key."); return; }
+
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
+  const submitButton = e.submitter;
+  if (submitButton) submitButton.disabled = true;
+
+  try {
+    const {data,error} = await db.auth.signInWithPassword({email,password});
+    if (error) {
+      msg("Sign in failed: "+friendlyError(error));
+      return;
+    }
+
+    currentUser = data.user;
+    await refreshAccess();
+    msg(approvedMember
+      ? "Sign in successful."
+      : "Sign in successful, but member access is pending approval. Contact an administrator.");
+  } catch (error) {
+    msg("Sign in failed: "+friendlyError(error));
+  } finally {
+    if (submitButton) submitButton.disabled = false;
+  }
 });
 
-async function logout(){
-  const {error}=await db.auth.signOut();
-  if(error){msg("Sign out failed: "+error.message);return;}
-  currentUser=null;isAdmin=false;approvedMember=false;
+async function logout() {
+  if (!db) return;
+  const {error} = await db.auth.signOut();
+  if (error) { msg("Sign out failed: "+friendlyError(error)); return; }
+
+  currentUser = null;
+  isAdmin = false;
+  approvedMember = false;
   await refreshAccess();
-  document.getElementById("searchResults").innerHTML="";
-  document.getElementById("myDonorBox").innerHTML="";
-  document.getElementById("requestResults").innerHTML="";
+
+  document.getElementById("searchResults").innerHTML = "";
+  document.getElementById("myDonorBox").innerHTML = "";
+  document.getElementById("requestResults").innerHTML = "";
   msg("You have signed out.");
   showPage("home");
 }
-async function resetPassword(){
-  const email=document.getElementById("loginEmail").value.trim();
-  if(!email){msg("Enter your email in the Sign In form first.");return;}
-  const {error}=await db.auth.resetPasswordForEmail(email,{
+
+async function resetPassword() {
+  if (!db) { msg("Supabase did not initialize. Reload the page and check the API key."); return; }
+  const email = document.getElementById("loginEmail").value.trim();
+  if (!email) { msg("Enter your email in the Sign In form first."); return; }
+
+  const {error} = await db.auth.resetPasswordForEmail(email,{
     redirectTo:window.location.origin+window.location.pathname
   });
-  if(error){msg("Password reset failed: "+error.message);return;}
+  if (error) { msg("Password reset failed: "+friendlyError(error)); return; }
   msg("If the email is registered, a reset link will be sent. Check inbox and spam.");
 }
-async function setNewPassword(){
-  const password=document.getElementById("newPassword").value;
-  if(password.length<8){msg("Use a password with at least 8 characters.");return;}
-  const {error}=await db.auth.updateUser({password});
-  if(error){msg("Password update failed: "+error.message);return;}
-  recoveryMode=false;
+
+async function setNewPassword() {
+  if (!db) return;
+  const password = document.getElementById("newPassword").value;
+  if (password.length < 8) { msg("Use a password with at least 8 characters."); return; }
+
+  const {error} = await db.auth.updateUser({password});
+  if (error) { msg("Password update failed: "+friendlyError(error)); return; }
+
+  recoveryMode = false;
   document.getElementById("recoveryBox").classList.add("hidden");
   msg("Password updated successfully.");
 }
-function requireApproved(){
-  if(!currentUser){msg("Please sign in first.");return false;}
-  if(!approvedMember){msg("Your member access is pending approval.");return false;}
+
+function requireApproved() {
+  if (!currentUser) { msg("Please sign in first."); return false; }
+  if (!approvedMember) { msg("Your member access is pending approval."); return false; }
   return true;
 }
 
-async function searchDonors(){
+async function searchDonors() {
   clearMsg();
-  const out=document.getElementById("searchResults");
-  out.innerHTML="";
-  if(!requireApproved())return;
-  let q=db.from("donors")
+  const out = document.getElementById("searchResults");
+  out.innerHTML = "";
+  if (!db) { msg("Supabase did not initialize. Check the API key."); return; }
+  if (!requireApproved()) return;
+
+  let q = db.from("donors")
     .select("id,full_name,blood_group,member_category,batch_or_department,area,phone_private,availability_status,last_blood_donation_date")
-    .eq("active",true).eq("member_verified",true).eq("donor_consent_confirmed",true);
-  const group=document.getElementById("searchGroup").value;
-  const area=document.getElementById("searchArea").value.trim();
-  if(group)q=q.eq("blood_group",group);
-  if(area)q=q.ilike("area","%"+area.replace(/[%_,]/g,"")+"%");
-  const {data,error}=await q.order("full_name").limit(100);
-  if(error){out.textContent="Search failed: "+error.message;return;}
-  if(!data||!data.length){out.textContent="No matching donors found.";return;}
-  out.innerHTML=data.map(d=>`
+    .eq("active",true)
+    .eq("member_verified",true)
+    .eq("donor_consent_confirmed",true);
+
+  const group = document.getElementById("searchGroup").value;
+  const area = document.getElementById("searchArea").value.trim();
+
+  if (group) q = q.eq("blood_group",group);
+  if (area) q = q.ilike("area","%"+area.replace(/[%_,]/g,"")+"%");
+
+  const {data,error} = await q.order("full_name").limit(100);
+  if (error) { out.textContent = "Search failed: "+friendlyError(error); return; }
+  if (!data || !data.length) { out.textContent = "No matching donors found."; return; }
+
+  out.innerHTML = data.map(d=>`
     <div class="result">
       <strong>${esc(d.full_name)}</strong>
       <p>Blood group: ${esc(d.blood_group)}</p>
@@ -370,21 +467,27 @@ async function searchDonors(){
     </div>`).join("");
 }
 
-async function loadMyDonor(){
+async function loadMyDonor() {
   clearMsg();
-  const box=document.getElementById("myDonorBox");
-  box.innerHTML="";
-  if(!requireApproved())return;
-  const {data,error}=await db.from("donors")
+  const box = document.getElementById("myDonorBox");
+  box.innerHTML = "";
+  if (!db) { msg("Supabase did not initialize. Check the API key."); return; }
+  if (!requireApproved()) return;
+
+  const {data,error} = await db.from("donors")
     .select("id,full_name,blood_group,area,phone_private,availability_status,last_blood_donation_date")
-    .eq("owner_user_id",currentUser.id).eq("active",true).limit(2);
-  if(error){box.textContent="Could not load your donor profile: "+error.message;return;}
-  if(!data||!data.length){
-    box.textContent="No donor record is linked to your account yet. Existing donor records are not automatically linked. Please contact the administrator to verify and link your record.";
+    .eq("owner_user_id",currentUser.id)
+    .eq("active",true)
+    .limit(2);
+
+  if (error) { box.textContent = "Could not load your donor profile: "+friendlyError(error); return; }
+  if (!data || !data.length) {
+    box.textContent = "No donor record is linked to your account yet. Existing donor records are not automatically linked. Please contact the administrator to verify and link your record.";
     return;
   }
-  const d=data[0];
-  box.innerHTML=`
+
+  const d = data[0];
+  box.innerHTML = `
     <div class="result">
       <strong>${esc(d.full_name)}</strong>
       <p>Blood group: ${esc(d.blood_group)}</p>
@@ -402,27 +505,40 @@ async function loadMyDonor(){
       <button onclick="saveMyDonor('${esc(d.id)}')">Save Changes</button>
     </div>`;
 }
-async function saveMyDonor(id){
-  if(!requireApproved())return;
-  const patch={
+
+async function saveMyDonor(id) {
+  if (!db || !requireApproved()) return;
+
+  const patch = {
     phone_private:document.getElementById("editPhone").value.trim()||null,
     area:document.getElementById("editArea").value.trim()||null,
     availability_status:document.getElementById("editAvailability").value,
     last_blood_donation_date:document.getElementById("editDonation").value||null
   };
-  const {data,error}=await db.from("donors").update(patch)
-    .eq("id",id).eq("owner_user_id",currentUser.id).select("id");
-  if(error){msg("Profile update failed: "+error.message);return;}
-  if(!data||!data.length){msg("No record was updated. Check donor ownership and database permissions.");return;}
+
+  const {data,error} = await db.from("donors").update(patch)
+    .eq("id",id)
+    .eq("owner_user_id",currentUser.id)
+    .select("id");
+
+  if (error) { msg("Profile update failed: "+friendlyError(error)); return; }
+  if (!data || !data.length) {
+    msg("No record was updated. Check donor ownership and database permissions.");
+    return;
+  }
+
   msg("Donor profile updated.");
   await loadMyDonor();
 }
 
 document.getElementById("requestForm").addEventListener("submit",async e=>{
-  e.preventDefault();clearMsg();
-  if(!requireApproved())return;
-  const needed=document.getElementById("reqTime").value;
-  const payload={
+  e.preventDefault();
+  clearMsg();
+  if (!db) { msg("Supabase did not initialize. Check the API key."); return; }
+  if (!requireApproved()) return;
+
+  const needed = document.getElementById("reqTime").value;
+  const payload = {
     requester_user_id:currentUser.id,
     requester_name:document.getElementById("reqName").value.trim(),
     contact_phone:document.getElementById("reqPhone").value.trim(),
@@ -433,25 +549,32 @@ document.getElementById("requestForm").addEventListener("submit",async e=>{
     needed_at:needed?new Date(needed).toISOString():null,
     details:document.getElementById("reqDetails").value.trim()||null
   };
-  const {error}=await db.from("blood_requests").insert(payload);
-  if(error){msg("Blood request failed: "+error.message);return;}
+
+  const {error} = await db.from("blood_requests").insert(payload);
+  if (error) { msg("Blood request failed: "+friendlyError(error)); return; }
+
   e.target.reset();
   msg("Blood request submitted successfully.");
   await loadRequests();
 });
 
-async function loadRequests(){
+async function loadRequests() {
   clearMsg();
-  const out=document.getElementById("requestResults");
-  out.innerHTML="";
-  if(!requireApproved())return;
-  const {data,error}=await db.from("blood_requests")
+  const out = document.getElementById("requestResults");
+  out.innerHTML = "";
+  if (!db) { msg("Supabase did not initialize. Check the API key."); return; }
+  if (!requireApproved()) return;
+
+  const {data,error} = await db.from("blood_requests")
     .select("id,requester_name,contact_phone,blood_group,units,hospital,area,needed_at,details,status,created_at")
     .in("status",["open","in_progress"])
-    .order("created_at",{ascending:false}).limit(100);
-  if(error){out.textContent="Could not load requests: "+error.message;return;}
-  if(!data||!data.length){out.textContent="No open blood requests found.";return;}
-  out.innerHTML=data.map(r=>`
+    .order("created_at",{ascending:false})
+    .limit(100);
+
+  if (error) { out.textContent = "Could not load requests: "+friendlyError(error); return; }
+  if (!data || !data.length) { out.textContent = "No open blood requests found."; return; }
+
+  out.innerHTML = data.map(r=>`
     <div class="result">
       <strong>${esc(r.blood_group)} · ${esc(r.units)} unit(s)</strong>
       <p>Requester: ${esc(r.requester_name)}</p>
@@ -463,26 +586,43 @@ async function loadRequests(){
     </div>`).join("");
 }
 
-async function checkAdmin(){
-  if(!currentUser){msg("Sign in as an administrator first.");return false;}
-  const {data,error}=await db.from("member_access")
-    .select("approved,role").eq("user_id",currentUser.id).maybeSingle();
-  if(error||!data||!data.approved||data.role!=="admin"){
-    msg("Administrator permission required.");return false;
+async function checkAdmin() {
+  if (!db || !currentUser) {
+    msg("Sign in as an administrator first.");
+    return false;
   }
-  isAdmin=true;approvedMember=true;
+
+  const {data,error} = await db.from("member_access")
+    .select("approved,role")
+    .eq("user_id",currentUser.id)
+    .maybeSingle();
+
+  if (error || !data || !data.approved || data.role!=="admin") {
+    msg("Administrator permission required.");
+    return false;
+  }
+
+  isAdmin = true;
+  approvedMember = true;
+  document.getElementById("adminNav").classList.remove("hidden");
   return true;
 }
-async function loadPendingMembers(){
-  if(!await checkAdmin())return;
-  const out=document.getElementById("pendingMembers");
-  out.textContent="Loading...";
-  const {data,error}=await db.from("member_access")
+
+async function loadPendingMembers() {
+  if (!await checkAdmin()) return;
+  const out = document.getElementById("pendingMembers");
+  out.textContent = "Loading...";
+
+  const {data,error} = await db.from("member_access")
     .select("user_id,display_name,member_category,batch_or_department,role,approved,created_at")
-    .eq("approved",false).order("created_at",{ascending:true}).limit(100);
-  if(error){out.textContent="Could not load members: "+error.message;return;}
-  if(!data||!data.length){out.textContent="No pending members.";return;}
-  out.innerHTML=data.map(m=>`
+    .eq("approved",false)
+    .order("created_at",{ascending:true})
+    .limit(100);
+
+  if (error) { out.textContent = "Could not load members: "+friendlyError(error); return; }
+  if (!data || !data.length) { out.textContent = "No pending members."; return; }
+
+  out.innerHTML = data.map(m=>`
     <div class="result">
       <strong>${esc(m.display_name||"Name not provided")}</strong>
       <p>Category: ${esc(m.member_category)} · Batch/Department: ${esc(m.batch_or_department||"Not provided")}</p>
@@ -491,36 +631,48 @@ async function loadPendingMembers(){
       <button class="danger" onclick="reviewMember('${esc(m.user_id)}',false)">Reject / Revoke approval</button>
     </div>`).join("");
 }
-async function reviewMember(id,approve){
-  if(!await checkAdmin())return;
-  if(!confirm((approve?"Approve":"Reject")+" this member?"))return;
-  const {error}=await db.rpc("admin_review_member",{
-    target_user_id:id,approve_member:approve
+
+async function reviewMember(id,approve) {
+  if (!await checkAdmin()) return;
+  if (!confirm((approve?"Approve":"Reject")+" this member?")) return;
+
+  const {error} = await db.rpc("admin_review_member",{
+    target_user_id:id,
+    approve_member:approve
   });
-  if(error){msg("Member review failed: "+error.message);return;}
+
+  if (error) { msg("Member review failed: "+friendlyError(error)); return; }
   msg(approve?"Member approved.":"Member approval revoked.");
   await loadPendingMembers();
 }
-async function promoteMember(){
-  if(!await checkAdmin())return;
-  const id=document.getElementById("promoteUserId").value.trim();
-  if(!id){msg("Enter the existing member's UUID.");return;}
-  if(!confirm("Promote this existing member to Admin? Only do this for a trusted person."))return;
-  const {error}=await db.rpc("admin_promote_member",{target_user_id:id});
-  if(error){msg("Admin promotion failed: "+error.message);return;}
-  document.getElementById("promoteUserId").value="";
+
+async function promoteMember() {
+  if (!await checkAdmin()) return;
+  const id = document.getElementById("promoteUserId").value.trim();
+  if (!id) { msg("Enter the existing member's UUID."); return; }
+  if (!confirm("Promote this existing member to Admin? Only do this for a trusted person.")) return;
+
+  const {error} = await db.rpc("admin_promote_member",{target_user_id:id});
+  if (error) { msg("Admin promotion failed: "+friendlyError(error)); return; }
+
+  document.getElementById("promoteUserId").value = "";
   msg("Admin role granted successfully.");
 }
 
-async function loadAdminDonors(){
-  if(!await checkAdmin())return;
-  const out=document.getElementById("adminDonors");
-  out.textContent="Loading donors...";
-  const includeInactive=document.getElementById("adminDonorFilter").value==="true";
-  const {data,error}=await db.rpc("admin_list_donors",{include_inactive:includeInactive});
-  if(error){out.textContent="Could not load donors: "+error.message;return;}
-  if(!data||!data.length){out.textContent="No donors found.";return;}
-  out.innerHTML=data.map(d=>`
+async function loadAdminDonors() {
+  if (!await checkAdmin()) return;
+  const out = document.getElementById("adminDonors");
+  out.textContent = "Loading donors...";
+  const includeInactive = document.getElementById("adminDonorFilter").value==="true";
+
+  const {data,error} = await db.rpc("admin_list_donors",{
+    include_inactive:includeInactive
+  });
+
+  if (error) { out.textContent = "Could not load donors: "+friendlyError(error); return; }
+  if (!data || !data.length) { out.textContent = "No donors found."; return; }
+
+  out.innerHTML = data.map(d=>`
     <div class="result">
       <strong>${esc(d.full_name)}</strong>
       <p>${esc(d.blood_group)} · ${esc(d.phone_private||"No phone")}</p>
@@ -531,41 +683,60 @@ async function loadAdminDonors(){
       <button class="danger" onclick="deleteDonor('${esc(d.id)}','${esc(d.full_name)}')">Permanently Delete</button>
     </div>`).join("");
 }
-async function changeDonor(id,action){
-  if(!await checkAdmin())return;
-  if(!confirm("Are you sure you want to "+action+" this donor?"))return;
-  const fn=action==="deactivate"?"admin_deactivate_donor":"admin_reactivate_donor";
-  const {error}=await db.rpc(fn,{target_donor_id:id});
-  if(error){msg("Donor update failed: "+error.message);return;}
+
+async function changeDonor(id,action) {
+  if (!await checkAdmin()) return;
+  if (!confirm("Are you sure you want to "+action+" this donor?")) return;
+
+  const fn = action==="deactivate"?"admin_deactivate_donor":"admin_reactivate_donor";
+  const {error} = await db.rpc(fn,{target_donor_id:id});
+
+  if (error) { msg("Donor update failed: "+friendlyError(error)); return; }
   msg("Donor status updated.");
   await loadAdminDonors();
 }
-async function deleteDonor(id,name){
-  if(!await checkAdmin())return;
-  if(!confirm("Permanently delete "+name+"? This cannot be undone."))return;
-  if(!confirm("Final confirmation: permanently delete this donor?"))return;
-  const {error}=await db.rpc("admin_delete_donor",{target_donor_id:id});
-  if(error){msg("Donor deletion failed: "+error.message);return;}
+
+async function deleteDonor(id,name) {
+  if (!await checkAdmin()) return;
+  if (!confirm("Permanently delete "+name+"? This cannot be undone.")) return;
+  if (!confirm("Final confirmation: permanently delete this donor?")) return;
+
+  const {error} = await db.rpc("admin_delete_donor",{target_donor_id:id});
+  if (error) { msg("Donor deletion failed: "+friendlyError(error)); return; }
+
   msg("Donor deleted.");
   await loadAdminDonors();
 }
 
-db.auth.onAuthStateChange((event,session)=>{
-  currentUser=session?session.user:null;
-  if(event==="PASSWORD_RECOVERY"){
-    recoveryMode=true;
-    document.getElementById("recoveryBox").classList.remove("hidden");
-    msg("Enter your new password in the password reset section.");
-  }
-  setTimeout(refreshAccess,0);
-});
+if (db) {
+  db.auth.onAuthStateChange((event,session)=>{
+    currentUser = session ? session.user : null;
 
-(async function init(){
-  const {data,error}=await db.auth.getSession();
-  if(error){msg("Session check failed: "+error.message);return;}
-  currentUser=data.session?data.session.user:null;
-  await refreshAccess();
-})();
+    if (event==="PASSWORD_RECOVERY") {
+      recoveryMode = true;
+      document.getElementById("recoveryBox").classList.remove("hidden");
+      msg("Enter your new password in the password reset section.");
+    }
+
+    refreshAccess().catch(error=>{
+      console.error("Access refresh failed:",error);
+    });
+  });
+
+  (async function init(){
+    try {
+      const {data,error} = await db.auth.getSession();
+      if (error) {
+        msg("Session check failed: "+friendlyError(error));
+        return;
+      }
+      currentUser = data.session ? data.session.user : null;
+      await refreshAccess();
+    } catch (error) {
+      msg("Website initialization failed: "+friendlyError(error));
+    }
+  })();
+}
 </script>
 </body>
 </html>
