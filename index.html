@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,12 +20,15 @@ button{width:100%;padding:13px;margin-top:12px;border:0;border-radius:8px;backgr
 button:disabled{opacity:.6}
 button.secondary{background:#5d6872}
 button.reject{background:#5d6872}
+button.danger{background:#8b1e1e}
+button.success{background:#246b45}
 .status{line-height:1.6;overflow-wrap:anywhere}
 .donor-card{border:1px solid #e0e4e8;border-radius:10px;padding:14px;margin-top:12px;overflow-wrap:anywhere}
 .donor-card h3{margin-top:0;color:#a71930}
-.actions{display:flex;gap:10px}
-.actions button{flex:1}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.actions button{flex:1;min-width:120px}
 footer{text-align:center;padding:20px;color:#65727c;font-size:13px}
+hr{border:0;border-top:1px solid #e0e4e8;margin:24px 0}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -67,14 +69,19 @@ footer{text-align:center;padding:20px;color:#65727c;font-size:13px}
 <label for="app-category">DCIMC Affiliation</label>
 <select id="app-category" required>
 <option value="">Select category</option>
-<option>Student</option><option>Teacher</option><option>Doctor</option><option>Staff</option>
+<option value="student">Student</option>
+<option value="teacher">Teacher</option>
+<option value="doctor">Doctor</option>
+<option value="staff">Staff</option>
 </select>
 
 <label for="app-details">Batch / Department</label>
 <input id="app-details" maxlength="100" placeholder="e.g. DCIMC 15 / Medicine">
 
-<label><input id="app-consent" type="checkbox" required>
-I consent to submit my information for verification. I understand my phone number will be available to authorized members if my application is approved.</label>
+<label>
+<input id="app-consent" type="checkbox" required>
+I consent to submit my information for verification. I understand my phone number will be available to authorized members if my application is approved.
+</label>
 
 <button id="app-submit" type="submit">Submit Donor Application</button>
 </form>
@@ -126,14 +133,31 @@ I consent to submit my information for verification. I understand my phone numbe
 <div id="donor-results"></div>
 </div>
 
-<!-- Admin panel: only displayed when database confirms admin status -->
 <div id="admin-panel" hidden>
 <hr>
 <h2>Administrator Panel</h2>
-<div class="notice">Pending applications are visible to authorized administrators only. Check applicant details before approving.</div>
+<div class="notice">Review applications carefully before approving or rejecting them.</div>
 <button id="refresh-applications" type="button">Refresh Applications</button>
 <p id="admin-status" class="status" role="status" aria-live="polite"></p>
 <div id="application-results"></div>
+
+<hr>
+<h2>Donor Management</h2>
+<p>Search donor records and manage their status. Permanent deletion cannot be undone.</p>
+
+<label for="admin-donor-name">Donor Name</label>
+<input id="admin-donor-name" placeholder="Enter donor name or leave blank">
+
+<label for="admin-donor-status">Donor Status</label>
+<select id="admin-donor-status">
+<option value="active">Active Donors</option>
+<option value="inactive">Inactive Donors</option>
+<option value="all">All Donors</option>
+</select>
+
+<button id="admin-search-donors" type="button">Load Donors</button>
+<p id="admin-donor-status-message" class="status" role="status" aria-live="polite"></p>
+<div id="admin-donor-results"></div>
 </div>
 </div>
 </section>
@@ -144,9 +168,8 @@ I consent to submit my information for verification. I understand my phone numbe
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL="https://crvqhikvniqttlhugsla.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY="sb_publishable_FK2wlfxjjbYlBuBE0-mSQA_5_xyX5H3";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_FK2wlfxjjbYlBuBE0-mSQA_5_xyXH3";
 const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
-
 const $=id=>document.getElementById(id);
 let currentUser=null;
 let isAdmin=false;
@@ -164,6 +187,7 @@ function showLogin(message=""){
   $("status").textContent=message;
   $("donor-results").replaceChildren();
   $("application-results").replaceChildren();
+  $("admin-donor-results").replaceChildren();
 }
 
 async function verifyMember(user){
@@ -186,12 +210,14 @@ async function verifyMember(user){
   $("member-info").textContent="Signed in as "+user.email+".";
   $("status").textContent="Membership approval verified.";
 
-  // The database function checks the authenticated user's actual admin role.
   const {data:adminResult,error:adminError}=await client.rpc("is_dswc_admin");
   isAdmin=!adminError && adminResult===true;
   $("admin-panel").hidden=!isAdmin;
 
-  if(isAdmin) await loadApplications();
+  if(isAdmin){
+    await loadApplications();
+    await loadAdminDonors();
+  }
 }
 
 $("application-form").addEventListener("submit",async e=>{
@@ -223,68 +249,106 @@ $("application-form").addEventListener("submit",async e=>{
       consent_given:true,
       status:"pending"
     });
+
     if(error){
       console.error(error);
       $("app-status").textContent="Application could not be submitted. Please try again later.";
       return;
     }
+
     $("application-form").reset();
     $("app-status").textContent="Application submitted successfully! It is pending administrator review.";
   }catch(err){
     console.error(err);
     $("app-status").textContent="Something went wrong. Please try again.";
-  }finally{btn.disabled=false;}
+  }finally{
+    btn.disabled=false;
+  }
 });
 
 $("login-form").addEventListener("submit",async e=>{
   e.preventDefault();
   $("login-button").disabled=true;
   $("status").textContent="Signing in...";
+
   try{
     const {data,error}=await client.auth.signInWithPassword({
       email:$("email").value.trim(),
       password:$("password").value
     });
-    if(error) showLogin("Sign-in failed. Check your email and password.");
+    if(error)showLogin("Sign-in failed. Check your email and password.");
     else await verifyMember(data.user);
-  }catch(err){showLogin("Something went wrong. Please try again.");}
-  finally{$("login-button").disabled=false;}
+  }catch(err){
+    showLogin("Something went wrong. Please try again.");
+  }finally{
+    $("login-button").disabled=false;
+  }
 });
 
 $("forgot-button").addEventListener("click",async()=>{
   const email=$("email").value.trim();
-  if(!email){$("status").textContent="Enter your email address first.";return;}
+  if(!email){
+    $("status").textContent="Enter your email address first.";
+    return;
+  }
+
   const btn=$("forgot-button");
   btn.disabled=true;
+
   try{
     const redirectTo=window.location.origin+window.location.pathname;
     const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo});
-    $("status").textContent=error?"Could not send reset email. Try again later.":"If an account exists, a reset link will be sent. Check your inbox and spam folder.";
-  }catch(err){$("status").textContent="Something went wrong. Please try again.";}
-  finally{btn.disabled=false;}
+    $("status").textContent=error
+      ?"Could not send reset email. Try again later."
+      :"If an account exists, a reset link will be sent. Check your inbox and spam folder.";
+  }catch(err){
+    $("status").textContent="Something went wrong. Please try again.";
+  }finally{
+    btn.disabled=false;
+  }
 });
 
 $("new-password-form").addEventListener("submit",async e=>{
   e.preventDefault();
   const p=$("new-password").value;
-  if(p.length<8){$("status").textContent="Password must be at least 8 characters.";return;}
-  if(p!==$("confirm-password").value){$("status").textContent="Passwords do not match.";return;}
+
+  if(p.length<8){
+    $("status").textContent="Password must be at least 8 characters.";
+    return;
+  }
+  if(p!==$("confirm-password").value){
+    $("status").textContent="Passwords do not match.";
+    return;
+  }
+
   $("update-password-button").disabled=true;
+
   try{
     const {error}=await client.auth.updateUser({password:p});
-    if(error){$("status").textContent="Password update failed. Reopen the reset link and try again.";return;}
+    if(error){
+      $("status").textContent="Password update failed. Reopen the reset link and try again.";
+      return;
+    }
+
     await client.auth.signOut();
     history.replaceState({},document.title,location.pathname);
     $("password").value="";
     $("new-password").value="";
     $("confirm-password").value="";
     showLogin("Password updated. Please sign in with your new password.");
-  }catch(err){$("status").textContent="Something went wrong. Please try again.";}
-  finally{$("update-password-button").disabled=false;}
+  }catch(err){
+    $("status").textContent="Something went wrong. Please try again.";
+  }finally{
+    $("update-password-button").disabled=false;
+  }
 });
 
 $("search-button").addEventListener("click",async()=>{
-  if(!currentUser){showLogin("Please sign in first.");return;}
+  if(!currentUser){
+    showLogin("Please sign in first.");
+    return;
+  }
+
   const btn=$("search-button");
   btn.disabled=true;
   $("search-status").textContent="Searching...";
@@ -301,13 +365,22 @@ $("search-button").addEventListener("click",async()=>{
     const blood=$("search-blood").value;
     const area=$("search-area").value.trim();
     const name=$("search-name").value.trim();
+
     if(blood)q=q.eq("blood_group",blood);
     if(area)q=q.ilike("area","%"+area+"%");
     if(name)q=q.ilike("full_name","%"+name+"%");
 
     const {data,error}=await q;
-    if(error){$("search-status").textContent="Search failed. Please try again.";return;}
-    if(!data||!data.length){$("search-status").textContent="No matching donors found.";return;}
+
+    if(error){
+      console.error(error);
+      $("search-status").textContent="Search failed. Please try again.";
+      return;
+    }
+    if(!data||!data.length){
+      $("search-status").textContent="No matching donors found.";
+      return;
+    }
 
     data.forEach(d=>{
       const card=document.createElement("div");
@@ -315,6 +388,7 @@ $("search-button").addEventListener("click",async()=>{
       const h=document.createElement("h3");
       h.textContent=d.full_name||"Name unavailable";
       card.appendChild(h);
+
       [
         ["Blood Group",d.blood_group],
         ["Area",d.area],
@@ -328,11 +402,17 @@ $("search-button").addEventListener("click",async()=>{
         p.textContent=label+": "+value;
         card.appendChild(p);
       });
+
       $("donor-results").appendChild(card);
     });
+
     $("search-status").textContent=data.length+" donor(s) found.";
-  }catch(err){$("search-status").textContent="Something went wrong. Please try again.";}
-  finally{btn.disabled=false;}
+  }catch(err){
+    console.error(err);
+    $("search-status").textContent="Something went wrong. Please try again.";
+  }finally{
+    btn.disabled=false;
+  }
 });
 
 async function loadApplications(){
@@ -340,6 +420,7 @@ async function loadApplications(){
     $("admin-status").textContent="Administrator access required.";
     return;
   }
+
   $("admin-status").textContent="Loading pending applications...";
   $("application-results").replaceChildren();
   $("refresh-applications").disabled=true;
@@ -348,20 +429,21 @@ async function loadApplications(){
     const {data,error}=await client.from("donor_registration_requests")
       .select("id,full_name,blood_group,phone,area,member_category,batch_or_department,created_at")
       .eq("status","pending")
-      .order("created_at",{ascending:true})
-      .limit(100);
+      .order("created_at",{ascending:true}).limit(100);
 
     if(error){
       console.error(error);
       $("admin-status").textContent="Could not load applications. Check permissions and try again.";
       return;
     }
+
     if(!data||!data.length){
       $("admin-status").textContent="No pending applications.";
       return;
     }
 
     $("admin-status").textContent=data.length+" pending application(s).";
+
     data.forEach(app=>{
       const card=document.createElement("div");
       card.className="donor-card";
@@ -400,7 +482,9 @@ async function loadApplications(){
   }catch(err){
     console.error(err);
     $("admin-status").textContent="Could not load applications.";
-  }finally{$("refresh-applications").disabled=false;}
+  }finally{
+    $("refresh-applications").disabled=false;
+  }
 }
 
 async function processApplication(id,action,approveBtn,rejectBtn){
@@ -419,13 +503,16 @@ async function processApplication(id,action,approveBtn,rejectBtn){
   try{
     const functionName=action==="approve"?"approve_donor_application":"reject_donor_application";
     const {data,error}=await client.rpc(functionName,{application_id:id});
+
     if(error){
       console.error(error);
       $("admin-status").textContent="Action failed: "+error.message;
       return;
     }
+
     $("admin-status").textContent=typeof data==="string"?data:"Application updated.";
     await loadApplications();
+    await loadAdminDonors();
   }catch(err){
     console.error(err);
     $("admin-status").textContent="Something went wrong. Please refresh and try again.";
@@ -435,7 +522,145 @@ async function processApplication(id,action,approveBtn,rejectBtn){
   }
 }
 
+async function loadAdminDonors(){
+  if(!currentUser||!isAdmin){
+    $("admin-donor-status-message").textContent="Administrator access required.";
+    return;
+  }
+
+  const btn=$("admin-search-donors");
+  btn.disabled=true;
+  $("admin-donor-status-message").textContent="Loading donor records...";
+  $("admin-donor-results").replaceChildren();
+
+  try{
+    const status=$("admin-donor-status").value;
+    const includeInactive=status!=="active";
+    const {data,error}=await client.rpc("admin_list_donors",{
+      include_inactive:includeInactive
+    });
+
+    if(error){
+      console.error(error);
+      $("admin-donor-status-message").textContent="Could not load donors: "+error.message;
+      return;
+    }
+
+    let donors=data||[];
+
+    if(status==="inactive")donors=donors.filter(d=>!d.active);
+
+    const name=$("admin-donor-name").value.trim().toLowerCase();
+    if(name)donors=donors.filter(d=>(d.full_name||"").toLowerCase().includes(name));
+
+    if(!donors.length){
+      $("admin-donor-status-message").textContent="No matching donor records found.";
+      return;
+    }
+
+    $("admin-donor-status-message").textContent=donors.length+" donor record(s) found.";
+
+    donors.forEach(d=>{
+      const card=document.createElement("div");
+      card.className="donor-card";
+
+      const h=document.createElement("h3");
+      h.textContent=d.full_name||"Name unavailable";
+      card.appendChild(h);
+
+      const details=[
+        ["Blood Group",d.blood_group],
+        ["Phone",d.phone_private],
+        ["Area",d.area],
+        ["Category",d.member_category],
+        ["Record Status",d.active?"Active":"Inactive"],
+        ["Verified",d.member_verified?"Yes":"No"],
+        ["Consent Confirmed",d.donor_consent_confirmed?"Yes":"No"]
+      ];
+
+      details.forEach(([label,value])=>{
+        if(value===null||value===undefined||value==="")return;
+        const p=document.createElement("p");
+        p.textContent=label+": "+value;
+        card.appendChild(p);
+      });
+
+      const actions=document.createElement("div");
+      actions.className="actions";
+
+      if(d.active){
+        const deactivate=document.createElement("button");
+        deactivate.textContent="Deactivate";
+        deactivate.className="secondary";
+        deactivate.addEventListener("click",()=>manageDonor(
+          d.id,"admin_deactivate_donor","Deactivate this donor? They will no longer appear in donor search."
+        ));
+        actions.appendChild(deactivate);
+      }else{
+        const reactivate=document.createElement("button");
+        reactivate.textContent="Reactivate";
+        reactivate.className="success";
+        reactivate.addEventListener("click",()=>manageDonor(
+          d.id,"admin_reactivate_donor","Reactivate this donor? Please confirm their details and availability first."
+        ));
+        actions.appendChild(reactivate);
+      }
+
+      const del=document.createElement("button");
+      del.textContent="Permanently Delete";
+      del.className="danger";
+      del.addEventListener("click",()=>manageDonor(
+        d.id,"admin_delete_donor",
+        "WARNING: Permanently delete "+d.full_name+"? This cannot be undone."
+      ));
+      actions.appendChild(del);
+
+      card.appendChild(actions);
+      $("admin-donor-results").appendChild(card);
+    });
+  }catch(err){
+    console.error(err);
+    $("admin-donor-status-message").textContent="Could not load donor records.";
+  }finally{
+    btn.disabled=false;
+  }
+}
+
+async function manageDonor(id,functionName,confirmation){
+  if(!currentUser||!isAdmin){
+    $("admin-donor-status-message").textContent="Administrator access required.";
+    return;
+  }
+
+  if(!confirm(confirmation))return;
+
+  const buttons=$("admin-donor-results").querySelectorAll("button");
+  buttons.forEach(b=>b.disabled=true);
+  $("admin-donor-status-message").textContent="Processing request...";
+
+  try{
+    const {data,error}=await client.rpc(functionName,{
+      target_donor_id:id
+    });
+
+    if(error){
+      console.error(error);
+      $("admin-donor-status-message").textContent="Action failed: "+error.message;
+      return;
+    }
+
+    $("admin-donor-status-message").textContent=
+      typeof data==="string"?data:"Donor record updated.";
+
+    await loadAdminDonors();
+  }catch(err){
+    console.error(err);
+    $("admin-donor-status-message").textContent="Something went wrong. Please try again.";
+  }
+}
+
 $("refresh-applications").addEventListener("click",loadApplications);
+$("admin-search-donors").addEventListener("click",loadAdminDonors);
 
 $("logout-button").addEventListener("click",async()=>{
   await client.auth.signOut();
@@ -452,6 +677,7 @@ client.auth.onAuthStateChange((event,session)=>{
     $("new-password-form").hidden=false;
     $("status").textContent="Enter a new password for your account.";
   }
+
   if(event==="SIGNED_OUT"){
     currentUser=null;
     isAdmin=false;
@@ -469,6 +695,7 @@ client.auth.onAuthStateChange((event,session)=>{
     $("status").textContent="Enter a new password for your account.";
     return;
   }
+
   const {data}=await client.auth.getSession();
   if(data.session)await verifyMember(data.session.user);
 })();
