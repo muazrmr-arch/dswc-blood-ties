@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -53,6 +54,7 @@
       display: block;
       margin: 14px 0 6px;
       font-weight: bold;
+      line-height: 1.5;
     }
 
     input, select {
@@ -62,6 +64,11 @@
       border-radius: 8px;
       font-size: 16px;
       background: white;
+    }
+
+    input[type="checkbox"] {
+      width: auto;
+      margin-right: 7px;
     }
 
     button {
@@ -80,7 +87,7 @@
     button:disabled { opacity: 0.6; }
     button.secondary { background: #5d6872; }
 
-    #status, #search-status {
+    #status, #search-status, #application-status {
       line-height: 1.6;
       overflow-wrap: anywhere;
     }
@@ -130,28 +137,142 @@
       </div>
     </section>
 
+    <!-- Donor Application -->
+    <section class="card">
+      <h2>Become a Blood Donor</h2>
+      <p>
+        DCIMC students, teachers, doctors and staff can apply
+        to join our donor community.
+      </p>
+
+      <div class="notice">
+        Your application will be reviewed by an administrator.
+        Your application does not automatically make you an
+        approved donor.
+      </div>
+
+      <form id="donor-application-form">
+        <label for="applicant-name">Full Name</label>
+        <input
+          id="applicant-name"
+          type="text"
+          maxlength="100"
+          autocomplete="name"
+          required
+          placeholder="Enter your full name"
+        >
+
+        <label for="applicant-blood-group">Blood Group</label>
+        <select id="applicant-blood-group" required>
+          <option value="">Select blood group</option>
+          <option value="A+">A+</option>
+          <option value="A-">A-</option>
+          <option value="B+">B+</option>
+          <option value="B-">B-</option>
+          <option value="AB+">AB+</option>
+          <option value="AB-">AB-</option>
+          <option value="O+">O+</option>
+          <option value="O-">O-</option>
+        </select>
+
+        <label for="applicant-phone">Phone Number</label>
+        <input
+          id="applicant-phone"
+          type="tel"
+          maxlength="20"
+          autocomplete="tel"
+          required
+          placeholder="Enter your phone number"
+        >
+
+        <label for="applicant-area">Current Area</label>
+        <input
+          id="applicant-area"
+          type="text"
+          maxlength="100"
+          required
+          placeholder="e.g. Mohammadpur, Dhaka"
+        >
+
+        <label for="applicant-category">
+          Your DCIMC Affiliation
+        </label>
+        <select id="applicant-category" required>
+          <option value="">Select your category</option>
+          <option value="Student">Student</option>
+          <option value="Teacher">Teacher</option>
+          <option value="Doctor">Doctor</option>
+          <option value="Staff">Staff</option>
+        </select>
+
+        <label for="applicant-details">
+          Batch / Department
+        </label>
+        <input
+          id="applicant-details"
+          type="text"
+          maxlength="100"
+          placeholder="e.g. DCIMC 15 / Medicine Department"
+        >
+
+        <label>
+          <input
+            id="applicant-consent"
+            type="checkbox"
+            required
+          >
+          I consent to submit my information for verification.
+          I understand that my phone number will be shared
+          with authorized members only if my donor application
+          is approved.
+        </label>
+
+        <button id="application-submit-button" type="submit">
+          Submit Donor Application
+        </button>
+      </form>
+
+      <p
+        id="application-status"
+        role="status"
+        aria-live="polite"
+      ></p>
+    </section>
+
+    <!-- Member Login -->
     <section class="card">
       <h2>Member Login</h2>
       <p>Sign in using your approved account.</p>
 
       <form id="login-form">
         <label for="email">Email address</label>
-        <input id="email" type="email"
-          autocomplete="username" required
-          placeholder="Enter your email">
+        <input
+          id="email"
+          type="email"
+          autocomplete="username"
+          required
+          placeholder="Enter your email"
+        >
 
         <label for="password">Password</label>
-        <input id="password" type="password"
-          autocomplete="current-password" required
-          placeholder="Enter your password">
+        <input
+          id="password"
+          type="password"
+          autocomplete="current-password"
+          required
+          placeholder="Enter your password"
+        >
 
         <button id="login-button" type="submit">
           Sign In
         </button>
       </form>
 
-      <button id="forgot-password-button"
-        type="button" class="secondary">
+      <button
+        id="forgot-password-button"
+        type="button"
+        class="secondary"
+      >
         Forgot Password?
       </button>
 
@@ -159,14 +280,24 @@
         <h2>Set New Password</h2>
 
         <label for="new-password">New password</label>
-        <input id="new-password" type="password"
-          autocomplete="new-password" minlength="8"
-          required placeholder="At least 8 characters">
+        <input
+          id="new-password"
+          type="password"
+          autocomplete="new-password"
+          minlength="8"
+          required
+          placeholder="At least 8 characters"
+        >
 
         <label for="confirm-password">Confirm new password</label>
-        <input id="confirm-password" type="password"
-          autocomplete="new-password" minlength="8"
-          required placeholder="Enter the password again">
+        <input
+          id="confirm-password"
+          type="password"
+          autocomplete="new-password"
+          minlength="8"
+          required
+          placeholder="Enter the password again"
+        >
 
         <button id="update-password-button" type="submit">
           Update Password
@@ -182,6 +313,7 @@
         </button>
       </div>
 
+      <!-- Donor Search -->
       <div id="donor-search" hidden>
         <hr>
         <h2>Find a Blood Donor</h2>
@@ -201,19 +333,29 @@
         </select>
 
         <label for="search-area">Area</label>
-        <input id="search-area" type="text"
-          placeholder="Enter area or location">
+        <input
+          id="search-area"
+          type="text"
+          placeholder="Enter area or location"
+        >
 
         <label for="search-name">Donor Name</label>
-        <input id="search-name" type="text"
-          placeholder="Enter donor name">
+        <input
+          id="search-name"
+          type="text"
+          placeholder="Enter donor name"
+        >
 
         <button id="search-button" type="button">
           Search Donors
         </button>
 
-        <p id="search-status" role="status"
-          aria-live="polite"></p>
+        <p
+          id="search-status"
+          role="status"
+          aria-live="polite"
+        ></p>
+
         <div id="donor-results"></div>
       </div>
     </section>
@@ -235,25 +377,125 @@
       SUPABASE_PUBLISHABLE_KEY
     );
 
+    // Elements
     const form = document.getElementById("login-form");
     const status = document.getElementById("status");
     const loginButton = document.getElementById("login-button");
     const signedIn = document.getElementById("signed-in");
     const memberInfo = document.getElementById("member-info");
+
     const resetButton =
       document.getElementById("forgot-password-button");
+
     const newPasswordForm =
       document.getElementById("new-password-form");
+
     const updatePasswordButton =
       document.getElementById("update-password-button");
-    const donorSearch = document.getElementById("donor-search");
-    const searchButton = document.getElementById("search-button");
-    const searchStatus = document.getElementById("search-status");
-    const donorResults = document.getElementById("donor-results");
+
+    const donorSearch =
+      document.getElementById("donor-search");
+
+    const searchButton =
+      document.getElementById("search-button");
+
+    const searchStatus =
+      document.getElementById("search-status");
+
+    const donorResults =
+      document.getElementById("donor-results");
+
+    const applicationForm =
+      document.getElementById("donor-application-form");
+
+    const applicationStatus =
+      document.getElementById("application-status");
+
+    const applicationSubmitButton =
+      document.getElementById("application-submit-button");
 
     let recoveryMode =
       window.location.hash.includes("type=recovery");
+
     let currentUser = null;
+
+    // Donor application
+    applicationForm.addEventListener("submit", async function(event) {
+      event.preventDefault();
+
+      if (!document.getElementById("applicant-consent").checked) {
+        applicationStatus.textContent =
+          "Please provide consent before submitting.";
+        return;
+      }
+
+      const fullName =
+        document.getElementById("applicant-name").value.trim();
+
+      const bloodGroup =
+        document.getElementById("applicant-blood-group").value;
+
+      const phone =
+        document.getElementById("applicant-phone").value.trim();
+
+      const area =
+        document.getElementById("applicant-area").value.trim();
+
+      const memberCategory =
+        document.getElementById("applicant-category").value;
+
+      const details =
+        document.getElementById("applicant-details").value.trim();
+
+      if (!fullName || !bloodGroup || !phone || !area || !memberCategory) {
+        applicationStatus.textContent =
+          "Please complete all required fields.";
+        return;
+      }
+
+      if (!/^[+\d][\d\s()-]{5,19}$/.test(phone)) {
+        applicationStatus.textContent =
+          "Please enter a valid phone number.";
+        return;
+      }
+
+      applicationSubmitButton.disabled = true;
+      applicationStatus.textContent = "Submitting your application...";
+
+      try {
+        const { error } = await client
+          .from("donor_registration_requests")
+          .insert({
+            owner_user_id: null,
+            full_name: fullName,
+            blood_group: bloodGroup,
+            phone: phone,
+            area: area,
+            member_category: memberCategory,
+            batch_or_department: details || null,
+            consent_given: true,
+            status: "pending"
+          });
+
+        if (error) {
+          console.error("Donor application submission failed:", error);
+          applicationStatus.textContent =
+            "Application could not be submitted. Please try again later.";
+          return;
+        }
+
+        applicationForm.reset();
+
+        applicationStatus.textContent =
+          "Application submitted successfully! It is pending administrator review. Your details will not be listed as an approved donor until verified.";
+      } catch (error) {
+        console.error("Donor application error:", error);
+        applicationStatus.textContent =
+          "Something went wrong. Please try again later.";
+      } finally {
+        applicationSubmitButton.disabled = false;
+      }
+    });
 
     function showLogin(message) {
       currentUser = null;
@@ -301,14 +543,17 @@
       memberInfo.textContent = "Signed in as " + user.email + ".";
     }
 
+    // Member login
     form.addEventListener("submit", async function(event) {
       event.preventDefault();
+
       loginButton.disabled = true;
       status.textContent = "Signing in...";
 
       try {
         const email =
           document.getElementById("email").value.trim();
+
         const password =
           document.getElementById("password").value;
 
@@ -327,11 +572,15 @@
       }
     });
 
+    // Password reset
     resetButton.addEventListener("click", async function() {
-      const email = document.getElementById("email").value.trim();
+      const email =
+        document.getElementById("email").value.trim();
 
       if (!email) {
-        status.textContent = "Please enter your email address first.";
+        status.textContent =
+          "Please enter your email address first.";
+
         document.getElementById("email").focus();
         return;
       }
@@ -344,29 +593,34 @@
           window.location.origin + window.location.pathname;
 
         const { error } = await client.auth.resetPasswordForEmail(
-          email, { redirectTo }
+          email,
+          { redirectTo }
         );
 
         status.textContent = error
           ? "Could not send reset email. Please try again later."
           : "If an account exists for this email, a password reset link will be sent. Check your inbox and spam folder.";
       } catch (error) {
-        status.textContent = "Something went wrong. Please try again.";
+        status.textContent =
+          "Something went wrong. Please try again.";
       } finally {
         resetButton.disabled = false;
       }
     });
 
+    // Set new password
     newPasswordForm.addEventListener("submit", async function(event) {
       event.preventDefault();
 
       const newPassword =
         document.getElementById("new-password").value;
+
       const confirmPassword =
         document.getElementById("confirm-password").value;
 
       if (newPassword.length < 8) {
-        status.textContent = "Password must be at least 8 characters.";
+        status.textContent =
+          "Password must be at least 8 characters.";
         return;
       }
 
@@ -391,7 +645,9 @@
           await client.auth.signOut();
 
           window.history.replaceState(
-            {}, document.title, window.location.pathname
+            {},
+            document.title,
+            window.location.pathname
           );
 
           document.getElementById("password").value = "";
@@ -403,12 +659,14 @@
           );
         }
       } catch (error) {
-        status.textContent = "Something went wrong. Please try again.";
+        status.textContent =
+          "Something went wrong. Please try again.";
       } finally {
         updatePasswordButton.disabled = false;
       }
     });
 
+    // Search approved donors
     searchButton.addEventListener("click", async function() {
       if (!currentUser) {
         showLogin("Please sign in with an approved account.");
@@ -433,16 +691,24 @@
 
         const bloodGroup =
           document.getElementById("search-blood-group").value;
+
         const area =
           document.getElementById("search-area").value.trim();
+
         const name =
           document.getElementById("search-name").value.trim();
 
-        if (bloodGroup) query = query.eq("blood_group", bloodGroup);
+        if (bloodGroup) {
+          query = query.eq("blood_group", bloodGroup);
+        }
 
-        if (area) query = query.ilike("area", "%" + area + "%");
+        if (area) {
+          query = query.ilike("area", "%" + area + "%");
+        }
 
-        if (name) query = query.ilike("full_name", "%" + name + "%");
+        if (name) {
+          query = query.ilike("full_name", "%" + name + "%");
+        }
 
         const { data, error } = await query;
 
@@ -467,9 +733,14 @@
           card.appendChild(title);
 
           function addLine(label, value) {
-            if (value === null || value === undefined || value === "") {
+            if (
+              value === null ||
+              value === undefined ||
+              value === ""
+            ) {
               return;
             }
+
             const p = document.createElement("p");
             p.textContent = label + ": " + value;
             card.appendChild(p);
@@ -495,12 +766,14 @@
       }
     });
 
+    // Sign out
     document.getElementById("logout-button")
       .addEventListener("click", async function() {
         await client.auth.signOut();
         showLogin("You have signed out.");
       });
 
+    // Password recovery and session handling
     client.auth.onAuthStateChange(function(event, session) {
       if (event === "PASSWORD_RECOVERY") {
         recoveryMode = true;
@@ -526,7 +799,8 @@
         form.hidden = true;
         resetButton.hidden = true;
         newPasswordForm.hidden = false;
-        status.textContent = "Enter a new password for your account.";
+        status.textContent =
+          "Enter a new password for your account.";
         return;
       }
 
