@@ -3,534 +3,567 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DSWC Blood Ties</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f4f7fb;color:#202938}
-header{background:#a90024;color:white;padding:24px 16px;text-align:center}
-header h1{margin:0 0 8px;font-size:28px}
-header p{margin:0}
-main{max-width:900px;margin:20px auto;padding:0 12px}
-.card{background:white;padding:18px;margin:14px 0;border-radius:12px;box-shadow:0 2px 10px #0000000c}
-h2{font-size:20px;margin-top:0;color:#a90024}
-input,select,textarea{width:100%;padding:12px;margin:6px 0 12px;border:1px solid #cbd2dc;border-radius:7px;font-size:16px}
-button{border:0;border-radius:7px;padding:11px 15px;margin:4px 3px 4px 0;background:#a90024;color:white;font-size:15px;cursor:pointer}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f7fb;color:#202938;line-height:1.5}
+header{background:#a90024;color:white;padding:23px 15px;text-align:center}
+header h1{margin:0;font-size:27px}
+header p{margin:5px 0 0}
+nav{display:flex;gap:7px;padding:10px;background:white;overflow-x:auto;position:sticky;top:0;z-index:5;box-shadow:0 2px 6px #0001}
+nav button{white-space:nowrap;margin:0}
+main{max-width:950px;margin:18px auto;padding:0 12px}
+.card{background:white;border-radius:12px;padding:18px;margin-bottom:15px;box-shadow:0 2px 10px #0000000c}
+h2{color:#a90024;font-size:21px;margin-top:0}
+h3{font-size:17px}
+input,select,textarea{width:100%;padding:12px;margin:5px 0 12px;border:1px solid #cbd2dc;border-radius:7px;font-size:16px;background:white}
+input[type=checkbox]{width:auto}
+button{border:0;border-radius:7px;background:#a90024;color:white;padding:11px 14px;font-size:15px;cursor:pointer;margin:3px}
 button.secondary{background:#465569}
-button.danger{background:#6b1725}
+button.danger{background:#7b1b29}
 button:disabled{opacity:.5}
-.small{font-size:13px;color:#5c6675}
-.result{border:1px solid #e0e4ea;border-radius:8px;padding:13px;margin:10px 0;overflow-wrap:anywhere}
-.status{padding:10px;background:#fff4d8;border-radius:7px;margin:10px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+label{font-size:14px;font-weight:600}
+.small{font-size:13px;color:#667085}
+.result{border:1px solid #e0e4ea;border-radius:9px;padding:13px;margin:10px 0;overflow-wrap:anywhere}
+.status{padding:12px;border-radius:8px;background:#fff0d5;margin:12px auto;white-space:pre-wrap;overflow-wrap:anywhere}
 .hidden{display:none!important}
-.row{display:flex;gap:10px;flex-wrap:wrap}
-.row>*{flex:1;min-width:180px}
-footer{text-align:center;padding:24px;color:#667085;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.hero{background:#fff1f3;padding:22px;border-radius:12px;margin-bottom:15px}
+.hero h2{margin-bottom:8px}
+footer{text-align:center;color:#667085;padding:25px 12px;font-size:13px}
+hr{border:0;border-top:1px solid #e5e7eb;margin:20px 0}
 </style>
 </head>
 <body>
 <header>
-  <h1>DSWC Blood Ties</h1>
-  <p>Blood Donor Network</p>
-  <p>Dhaka Central International Medical College Community</p>
+<h1>DSWC Blood Ties</h1>
+<p>Blood Donor Network · DCIMC Community</p>
 </header>
 
+<nav>
+<button onclick="showPage('home')">Home</button>
+<button onclick="showPage('account')">Register / Sign in</button>
+<button onclick="showPage('donors')">Find Donors</button>
+<button onclick="showPage('profile')">My Donor Profile</button>
+<button onclick="showPage('requests')">Blood Requests</button>
+<button id="adminNav" class="hidden" onclick="showPage('admin')">Admin</button>
+</nav>
+
 <main>
-  <div id="notice" class="status hidden" role="status"></div>
+<div id="notice" class="status hidden" role="status"></div>
 
-  <section class="card">
-    <h2>Find a Blood Donor</h2>
-    <p class="small">Log in with your approved member account to search the donor directory.</p>
-    <label for="searchGroup">Blood Group</label>
-    <select id="searchGroup">
-      <option value="">All blood groups</option>
-      <option>A+</option><option>A-</option>
-      <option>B+</option><option>B-</option>
-      <option>AB+</option><option>AB-</option>
-      <option>O+</option><option>O-</option>
-    </select>
-    <label for="searchArea">Area (optional)</label>
-    <input id="searchArea" placeholder="e.g. Shyamoli, Mohammadpur">
-    <button id="searchBtn" onclick="searchDonors()">Search Donors</button>
-    <div id="searchResults"></div>
-  </section>
+<section id="page-home">
+<div class="hero">
+<h2>Donate Blood. Save Lives.</h2>
+<p>Connect with the DCIMC community to find blood donors and coordinate urgent blood needs.</p>
+<button onclick="showPage('account')">Join / Sign in</button>
+<button onclick="showPage('requests')">Blood Requests</button>
+</div>
+<div class="grid">
+<div class="card">
+<h3>Find a Donor</h3>
+<p>Search active donors by blood group and area after approved member sign-in.</p>
+<button onclick="showPage('donors')">Search Donors</button>
+</div>
+<div class="card">
+<h3>Become a Donor</h3>
+<p>Create an account and complete the donor application.</p>
+<button onclick="showPage('account')">Register</button>
+</div>
+<div class="card">
+<h3>Need Blood?</h3>
+<p>Submit a blood request with hospital and contact details.</p>
+<button onclick="showPage('requests')">Request Blood</button>
+</div>
+</div>
+</section>
 
-  <section class="card">
-    <h2>Donor Registration</h2>
-    <p>Want to become a donor? Submit your details. An administrator will review your application.</p>
-    <form id="applicationForm">
-      <label for="appName">Full Name *</label>
-      <input id="appName" required maxlength="120" autocomplete="name">
-      <label for="appGroup">Blood Group *</label>
-      <select id="appGroup" required>
-        <option value="">Select blood group</option>
-        <option>A+</option><option>A-</option>
-        <option>B+</option><option>B-</option>
-        <option>AB+</option><option>AB-</option>
-        <option>O+</option><option>O-</option>
-      </select>
-      <label for="appPhone">Contact Number *</label>
-      <input id="appPhone" required maxlength="30" type="tel" autocomplete="tel">
-      <label for="appArea">Area *</label>
-      <input id="appArea" required maxlength="150" placeholder="Your area">
-      <label for="appCategory">Member Category *</label>
-      <select id="appCategory" required>
-        <option value="">Select category</option>
-        <option value="student">Student</option>
-        <option value="teacher">Teacher</option>
-        <option value="doctor">Doctor</option>
-        <option value="staff">Staff</option>
-      </select>
-      <label for="appDetails">Batch / Department</label>
-      <input id="appDetails" maxlength="150" placeholder="e.g. DCIMC 15 / Medicine">
-      <label>
-        <input id="appConsent" type="checkbox" required style="width:auto">
-        I agree to register as a blood donor and consent to the use of my submitted details for donor coordination.
-      </label>
-      <button type="submit">Submit Application</button>
-    </form>
-  </section>
+<section id="page-account" class="hidden">
+<div class="card">
+<h2>Create Member Account</h2>
+<p class="small">For DCIMC students, teachers, doctors and staff. Your member access may require administrator approval.</p>
+<form id="registerForm">
+<label>Full Name *</label>
+<input id="regName" required maxlength="120">
+<label>Email *</label>
+<input id="regEmail" type="email" required autocomplete="email">
+<label>Password * (at least 8 characters)</label>
+<input id="regPassword" type="password" required minlength="8" autocomplete="new-password">
+<label>Member Category *</label>
+<select id="regCategory" required>
+<option value="">Select category</option>
+<option value="student">Student</option>
+<option value="teacher">Teacher</option>
+<option value="doctor">Doctor</option>
+<option value="staff">Staff</option>
+</select>
+<label>Batch / Department</label>
+<input id="regBatch" maxlength="150">
+<label><input id="regConsent" type="checkbox" required> I confirm that I am registering honestly as a DCIMC community member.</label>
+<button type="submit">Create Account</button>
+</form>
+</div>
 
-  <section class="card">
-    <h2>Member Login</h2>
-    <form id="loginForm">
-      <label for="email">Email</label>
-      <input id="email" type="email" required autocomplete="username">
-      <label for="password">Password</label>
-      <input id="password" type="password" required autocomplete="current-password">
-      <button type="submit">Log In</button>
-    </form>
-    <button class="secondary" onclick="resetPassword()">Forgot Password?</button>
-    <button class="secondary hidden" id="logoutBtn" onclick="logout()">Log Out</button>
-    <div id="accountInfo" class="small"></div>
-  </section>
+<div class="card">
+<h2>Sign In</h2>
+<form id="loginForm">
+<label>Email</label>
+<input id="loginEmail" type="email" required autocomplete="username">
+<label>Password</label>
+<input id="loginPassword" type="password" required autocomplete="current-password">
+<button type="submit">Sign In</button>
+</form>
+<button class="secondary" onclick="resetPassword()">Forgot Password?</button>
+<button id="logoutBtn" class="secondary hidden" onclick="logout()">Sign Out</button>
+<p id="accountInfo" class="small">You are not signed in.</p>
 
-  <section id="adminPanel" class="card hidden">
-    <h2>Administrator Panel</h2>
+<div id="recoveryBox" class="hidden">
+<hr>
+<h3>Set a New Password</h3>
+<input id="newPassword" type="password" minlength="8" placeholder="New password">
+<button onclick="setNewPassword()">Update Password</button>
+</div>
+</div>
+</section>
 
-    <h3>Pending Donor Applications</h3>
-    <button onclick="loadApplications()">Refresh Applications</button>
-    <div id="applications"></div>
+<section id="page-donors" class="hidden">
+<div class="card">
+<h2>Find Blood Donors</h2>
+<p class="small">Approved members only. Contact information is displayed only when database permissions allow it.</p>
+<label>Blood Group</label>
+<select id="searchGroup">
+<option value="">All groups</option>
+<option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+<option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+</select>
+<label>Area</label>
+<input id="searchArea" placeholder="e.g. Shyamoli">
+<button onclick="searchDonors()">Search</button>
+<div id="searchResults"></div>
+</div>
+</section>
 
-    <hr>
-    <h3>Donor Management</h3>
-    <p class="small">View donors, deactivate/reactivate a donor, or permanently delete a donor.</p>
-    <label for="adminDonorFilter">Donor status</label>
-    <select id="adminDonorFilter">
-      <option value="true">All donors, including inactive</option>
-      <option value="false">Active donors only</option>
-    </select>
-    <button onclick="loadAdminDonors()">Load Donors</button>
-    <div id="adminDonors"></div>
-  </section>
+<section id="page-profile" class="hidden">
+<div class="card">
+<h2>My Donor Profile</h2>
+<p class="small">This feature works only when your donor record is securely linked to your signed-in account. Existing unlinked donor records are not automatically claimed.</p>
+<button onclick="loadMyDonor()">Load My Donor Record</button>
+<div id="myDonorBox"></div>
+</div>
+</section>
+
+<section id="page-requests" class="hidden">
+<div class="card">
+<h2>Request Blood</h2>
+<p class="small">Sign in with an approved member account to submit a request.</p>
+<form id="requestForm">
+<label>Patient / Requester Name *</label>
+<input id="reqName" required maxlength="120">
+<label>Contact Number *</label>
+<input id="reqPhone" type="tel" required maxlength="30">
+<label>Blood Group *</label>
+<select id="reqGroup" required>
+<option value="">Select blood group</option>
+<option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+<option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+</select>
+<label>Number of Units *</label>
+<input id="reqUnits" type="number" min="1" max="20" value="1" required>
+<label>Hospital *</label>
+<input id="reqHospital" required maxlength="200">
+<label>Area *</label>
+<input id="reqArea" required maxlength="150">
+<label>When is blood needed?</label>
+<input id="reqTime" type="datetime-local">
+<label>Additional Details</label>
+<textarea id="reqDetails" rows="3" maxlength="1000"></textarea>
+<button type="submit">Submit Blood Request</button>
+</form>
+</div>
+
+<div class="card">
+<h2>Open Blood Requests</h2>
+<p class="small">Visible to approved members. Please verify the request and patient details before arranging donation.</p>
+<button onclick="loadRequests()">Refresh Requests</button>
+<div id="requestResults"></div>
+</div>
+</section>
+
+<section id="page-admin" class="hidden">
+<div class="card">
+<h2>Administrator Panel</h2>
+<p class="small">Administrator access is checked against the database.</p>
+<h3>Pending Member Approvals</h3>
+<button onclick="loadPendingMembers()">Refresh Members</button>
+<div id="pendingMembers"></div>
+<hr>
+<h3>Promote an Existing Member to Admin</h3>
+<p class="small">Enter the UUID of an existing member. Promote only trusted people. Never share this function with ordinary members.</p>
+<label>Member User ID (UUID)</label>
+<input id="promoteUserId" placeholder="User UUID">
+<button onclick="promoteMember()">Approve as Admin</button>
+<hr>
+<h3>Donor Management</h3>
+<label>Donor list</label>
+<select id="adminDonorFilter">
+<option value="true">Include inactive donors</option>
+<option value="false">Active donors only</option>
+</select>
+<button onclick="loadAdminDonors()">Load Donors</button>
+<div id="adminDonors"></div>
+</div>
+</section>
 </main>
 
-<footer>DSWC Blood Ties · DCIMC Community</footer>
+<footer>DSWC Blood Ties · Please confirm blood group, donor availability and clinical suitability before donation.</footer>
 
 <script>
 const SUPABASE_URL = "https://crvqhikvniqttlhugsla.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_FK2wlfxjjbYlBuBE0-mSQA_5_xyX5H3";
-
-const db = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
-);
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_FK2wlfxjjbYlBuBE0-mSQA_5_xyXH3";
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 let currentUser = null;
 let isAdmin = false;
+let approvedMember = false;
 let recoveryMode = false;
 
-function message(text) {
-  const box = document.getElementById("notice");
-  box.textContent = text;
-  box.classList.remove("hidden");
-  window.scrollTo({top: 0, behavior: "smooth"});
+function msg(s) {
+  const el = document.getElementById("notice");
+  el.textContent = s;
+  el.classList.remove("hidden");
+  window.scrollTo({top:0,behavior:"smooth"});
 }
-function clearMessage() {
-  document.getElementById("notice").classList.add("hidden");
-}
-function esc(value) {
-  return String(value ?? "").replace(/[&<>"']/g, c => ({
-    "&":"&amp;", "<":"&lt;", ">":"&gt;",
-    '"':"&quot;", "'":"&#39;"
+function clearMsg(){document.getElementById("notice").classList.add("hidden")}
+function esc(v){
+  return String(v ?? "").replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
   })[c]);
 }
-function showAccount() {
-  document.getElementById("logoutBtn").classList.toggle("hidden", !currentUser);
-  document.getElementById("accountInfo").textContent =
-    currentUser ? "Signed in: " + currentUser.email : "You are not logged in.";
-  document.getElementById("adminPanel").classList.toggle("hidden", !isAdmin);
-}
-
-async function refreshAccess() {
-  isAdmin = false;
-  if (currentUser) {
-    const {data, error} = await db
-      .from("member_access")
-      .select("approved,role")
-      .eq("user_id", currentUser.id)
-      .maybeSingle();
-
-    if (!error && data && data.approved === true && data.role === "admin") {
-      isAdmin = true;
-    }
-  }
-  showAccount();
-  if (isAdmin) loadApplications();
-}
-
-document.getElementById("loginForm").addEventListener("submit", async e => {
-  e.preventDefault();
-  clearMessage();
-
-  if (recoveryMode) {
-    message("Please use the password recovery link from your email to set a new password.");
-    return;
-  }
-
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
-
-  const {data, error} = await db.auth.signInWithPassword({email, password});
-  if (error) {
-    message("Login failed: " + error.message);
-    return;
-  }
-
-  currentUser = data.user;
-  await refreshAccess();
-
-  if (isAdmin) {
-    message("Login successful. Administrator Panel is available below.");
-  } else {
-    const {data: access, error: accessError} = await db
-      .from("member_access")
-      .select("approved")
-      .eq("user_id", currentUser.id)
-      .maybeSingle();
-
-    if (accessError) {
-      message("Signed in, but member approval could not be checked: " + accessError.message);
-    } else if (!access || access.approved !== true) {
-      message("Your account is not yet approved for member access. Please contact the administrator.");
-    } else {
-      message("Login successful.");
-    }
-  }
-});
-
-async function logout() {
-  const {error} = await db.auth.signOut();
-  if (error) {
-    message("Logout failed: " + error.message);
-    return;
-  }
-  currentUser = null;
-  isAdmin = false;
-  showAccount();
-  document.getElementById("searchResults").innerHTML = "";
-  document.getElementById("applications").innerHTML = "";
-  document.getElementById("adminDonors").innerHTML = "";
-  message("You have logged out.");
-}
-
-async function resetPassword() {
-  clearMessage();
-  const email = document.getElementById("email").value.trim();
-
-  if (!email) {
-    message("Enter your account email in the Email field first, then press Forgot Password again.");
-    document.getElementById("email").focus();
-    return;
-  }
-
-  const {error} = await db.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.origin + window.location.pathname
+function showPage(name){
+  ["home","account","donors","profile","requests","admin"].forEach(p=>{
+    document.getElementById("page-"+p).classList.toggle("hidden",p!==name);
   });
-
-  if (error) {
-    message("Password reset failed: " + error.message);
-  } else {
-    message("If this email is registered, a password reset link will be sent. Check your inbox and spam folder.");
+  if(name==="admin" && !isAdmin) msg("Administrator access is required.");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+async function refreshAccess(){
+  isAdmin=false;
+  approvedMember=false;
+  if(currentUser){
+    const {data,error}=await db.from("member_access")
+      .select("approved,role,display_name,member_category")
+      .eq("user_id",currentUser.id).maybeSingle();
+    if(!error && data){
+      approvedMember=data.approved===true;
+      isAdmin=data.approved===true && data.role==="admin";
+    }
   }
+  document.getElementById("adminNav").classList.toggle("hidden",!isAdmin);
+  document.getElementById("logoutBtn").classList.toggle("hidden",!currentUser);
+  document.getElementById("accountInfo").textContent=currentUser
+    ? "Signed in: "+currentUser.email+(approvedMember?" · Member approved":" · Pending member approval")
+    : "You are not signed in.";
 }
 
-document.getElementById("applicationForm").addEventListener("submit", async e => {
-  e.preventDefault();
-  clearMessage();
-
-  const payload = {
-    full_name: document.getElementById("appName").value.trim(),
-    blood_group: document.getElementById("appGroup").value,
-    phone: document.getElementById("appPhone").value.trim(),
-    area: document.getElementById("appArea").value.trim(),
-    member_category: document.getElementById("appCategory").value,
-    batch_or_department: document.getElementById("appDetails").value.trim() || null,
-    consent_given: document.getElementById("appConsent").checked,
-    status: "pending"
-  };
-
-  if (!payload.consent_given) {
-    message("Please confirm your consent before submitting.");
-    return;
-  }
-  if (currentUser) payload.owner_user_id = currentUser.id;
-
-  const {error} = await db.from("donor_registration_requests").insert(payload);
-  if (error) {
-    message("Application submission failed: " + error.message);
-    return;
-  }
-
+document.getElementById("registerForm").addEventListener("submit",async e=>{
+  e.preventDefault(); clearMsg();
+  const fullName=document.getElementById("regName").value.trim();
+  const email=document.getElementById("regEmail").value.trim();
+  const password=document.getElementById("regPassword").value;
+  const category=document.getElementById("regCategory").value;
+  const batch=document.getElementById("regBatch").value.trim();
+  if(!document.getElementById("regConsent").checked){msg("Please confirm the registration statement.");return;}
+  const {data,error}=await db.auth.signUp({
+    email,password,
+    options:{data:{
+      display_name:fullName,
+      member_category:category,
+      batch_or_department:batch
+    }}
+  });
+  if(error){msg("Registration failed: "+error.message);return;}
   e.target.reset();
-  message("Your donor application has been submitted for administrator review.");
+  if(data.session){
+    currentUser=data.user;
+    await refreshAccess();
+    msg("Account created. Your member access is pending administrator approval.");
+  }else{
+    msg("Registration submitted. Check your email to confirm the account if email confirmation is enabled. Your member access may require administrator approval.");
+  }
 });
 
-async function searchDonors() {
-  clearMessage();
-  const results = document.getElementById("searchResults");
-  results.innerHTML = "";
+document.getElementById("loginForm").addEventListener("submit",async e=>{
+  e.preventDefault(); clearMsg();
+  const email=document.getElementById("loginEmail").value.trim();
+  const password=document.getElementById("loginPassword").value;
+  const {data,error}=await db.auth.signInWithPassword({email,password});
+  if(error){msg("Sign in failed: "+error.message);return;}
+  currentUser=data.user;
+  await refreshAccess();
+  msg(approvedMember
+    ? "Sign in successful."
+    : "Sign in successful, but member access is pending approval. Contact an administrator.");
+});
 
-  if (!currentUser) {
-    message("Please log in with an approved member account before searching donors.");
-    return;
-  }
-
-  const {data: access, error: accessError} = await db
-    .from("member_access")
-    .select("approved")
-    .eq("user_id", currentUser.id)
-    .maybeSingle();
-
-  if (accessError || !access || access.approved !== true) {
-    message("Your account does not have approved member access.");
-    return;
-  }
-
-  let query = db.from("donors")
-    .select("id,full_name,blood_group,member_category,batch_or_department,area,phone_private,availability_status,last_blood_donation_date")
-    .eq("active", true)
-    .eq("member_verified", true)
-    .eq("donor_consent_confirmed", true);
-
-  const group = document.getElementById("searchGroup").value;
-  const area = document.getElementById("searchArea").value.trim();
-
-  if (group) query = query.eq("blood_group", group);
-  if (area) query = query.ilike("area", "%" + area.replace(/[%_,]/g, "") + "%");
-
-  const {data, error} = await query.order("full_name").limit(100);
-
-  if (error) {
-    results.textContent = "Search failed: " + error.message;
-    return;
-  }
-  if (!data || data.length === 0) {
-    results.textContent = "No matching active donors found.";
-    return;
-  }
-
-  results.innerHTML = data.map(d => `
-    <div class="result">
-      <strong>${esc(d.full_name)}</strong>
-      <p>Blood Group: <strong>${esc(d.blood_group)}</strong></p>
-      <p>Category: ${esc(d.member_category || "Not provided")}</p>
-      <p>Batch / Department: ${esc(d.batch_or_department || "Not provided")}</p>
-      <p>Area: ${esc(d.area || "Not provided")}</p>
-      <p>Availability: ${esc(d.availability_status || "Not specified")}</p>
-      <p>Last Donation: ${esc(d.last_blood_donation_date || "Not provided")}</p>
-      <p>Contact Number: ${d.phone_private
-        ? `<a href="tel:${esc(d.phone_private)}">${esc(d.phone_private)}</a>`
-        : "Not available"}</p>
-    </div>
-  `).join("");
+async function logout(){
+  const {error}=await db.auth.signOut();
+  if(error){msg("Sign out failed: "+error.message);return;}
+  currentUser=null;isAdmin=false;approvedMember=false;
+  await refreshAccess();
+  document.getElementById("searchResults").innerHTML="";
+  document.getElementById("myDonorBox").innerHTML="";
+  document.getElementById("requestResults").innerHTML="";
+  msg("You have signed out.");
+  showPage("home");
 }
-
-async function requireAdmin() {
-  if (!currentUser) {
-    message("Please log in as administrator first.");
-    return false;
-  }
-
-  const {data, error} = await db
-    .from("member_access")
-    .select("approved,role")
-    .eq("user_id", currentUser.id)
-    .maybeSingle();
-
-  if (error || !data || data.approved !== true || data.role !== "admin") {
-    message("Administrator permission is required.");
-    return false;
-  }
-  isAdmin = true;
-  showAccount();
+async function resetPassword(){
+  const email=document.getElementById("loginEmail").value.trim();
+  if(!email){msg("Enter your email in the Sign In form first.");return;}
+  const {error}=await db.auth.resetPasswordForEmail(email,{
+    redirectTo:window.location.origin+window.location.pathname
+  });
+  if(error){msg("Password reset failed: "+error.message);return;}
+  msg("If the email is registered, a reset link will be sent. Check inbox and spam.");
+}
+async function setNewPassword(){
+  const password=document.getElementById("newPassword").value;
+  if(password.length<8){msg("Use a password with at least 8 characters.");return;}
+  const {error}=await db.auth.updateUser({password});
+  if(error){msg("Password update failed: "+error.message);return;}
+  recoveryMode=false;
+  document.getElementById("recoveryBox").classList.add("hidden");
+  msg("Password updated successfully.");
+}
+function requireApproved(){
+  if(!currentUser){msg("Please sign in first.");return false;}
+  if(!approvedMember){msg("Your member access is pending approval.");return false;}
   return true;
 }
 
-async function loadApplications() {
-  if (!await requireAdmin()) return;
-  const container = document.getElementById("applications");
-  container.textContent = "Loading applications...";
-
-  const {data, error} = await db
-    .from("donor_registration_requests")
-    .select("id,full_name,blood_group,phone,area,member_category,batch_or_department,consent_given,status,created_at")
-    .eq("status", "pending")
-    .order("created_at", {ascending: true})
-    .limit(100);
-
-  if (error) {
-    container.textContent = "Could not load applications: " + error.message;
-    return;
-  }
-  if (!data || !data.length) {
-    container.textContent = "No pending applications.";
-    return;
-  }
-
-  container.innerHTML = data.map(a => `
-    <div class="result">
-      <strong>${esc(a.full_name)}</strong>
-      <p>Blood Group: ${esc(a.blood_group)} | Category: ${esc(a.member_category)}</p>
-      <p>Phone: ${esc(a.phone)} | Area: ${esc(a.area)}</p>
-      <p>Batch / Department: ${esc(a.batch_or_department || "Not provided")}</p>
-      <p>Consent: ${a.consent_given ? "Yes" : "No"}</p>
-      <button onclick="reviewApplication('${esc(a.id)}','approve')">Approve</button>
-      <button class="danger" onclick="reviewApplication('${esc(a.id)}','reject')">Reject</button>
-    </div>
-  `).join("");
-}
-
-async function reviewApplication(id, decision) {
-  if (!await requireAdmin()) return;
-  if (!confirm("Are you sure you want to " + decision + " this application?")) return;
-
-  const functionName = decision === "approve"
-    ? "approve_donor_application"
-    : "reject_donor_application";
-
-  const {error} = await db.rpc(functionName, {application_id: id});
-  if (error) {
-    message("Application update failed: " + error.message);
-    return;
-  }
-  message("Application " + decision + "d successfully.");
-  await loadApplications();
-}
-
-async function loadAdminDonors() {
-  if (!await requireAdmin()) return;
-  const container = document.getElementById("adminDonors");
-  container.textContent = "Loading donors...";
-
-  const includeInactive = document.getElementById("adminDonorFilter").value === "true";
-  const {data, error} = await db.rpc("admin_list_donors", {
-    include_inactive: includeInactive
-  });
-
-  if (error) {
-    container.textContent =
-      "Could not load donor management list: " + error.message +
-      " If the error says the function does not exist, the database needs one additional setup step.";
-    return;
-  }
-  if (!data || !data.length) {
-    container.textContent = "No donors found.";
-    return;
-  }
-
-  container.innerHTML = data.map(d => `
+async function searchDonors(){
+  clearMsg();
+  const out=document.getElementById("searchResults");
+  out.innerHTML="";
+  if(!requireApproved())return;
+  let q=db.from("donors")
+    .select("id,full_name,blood_group,member_category,batch_or_department,area,phone_private,availability_status,last_blood_donation_date")
+    .eq("active",true).eq("member_verified",true).eq("donor_consent_confirmed",true);
+  const group=document.getElementById("searchGroup").value;
+  const area=document.getElementById("searchArea").value.trim();
+  if(group)q=q.eq("blood_group",group);
+  if(area)q=q.ilike("area","%"+area.replace(/[%_,]/g,"")+"%");
+  const {data,error}=await q.order("full_name").limit(100);
+  if(error){out.textContent="Search failed: "+error.message;return;}
+  if(!data||!data.length){out.textContent="No matching donors found.";return;}
+  out.innerHTML=data.map(d=>`
     <div class="result">
       <strong>${esc(d.full_name)}</strong>
-      <p>Blood Group: ${esc(d.blood_group)} | Phone: ${esc(d.phone_private || "Not provided")}</p>
-      <p>Category: ${esc(d.member_category || "Not provided")} | Area: ${esc(d.area || "Not provided")}</p>
-      <p>Status: ${d.active ? "Active" : "Inactive"}</p>
-      ${d.active
-        ? `<button class="secondary" onclick="changeDonorStatus('${esc(d.id)}','deactivate')">Deactivate</button>`
-        : `<button onclick="changeDonorStatus('${esc(d.id)}','reactivate')">Reactivate</button>`}
-      <button class="danger" onclick="deleteDonor('${esc(d.id)}','${esc(d.full_name)}')">Permanently Delete</button>
-    </div>
-  `).join("");
+      <p>Blood group: ${esc(d.blood_group)}</p>
+      <p>Category: ${esc(d.member_category||"Not provided")}</p>
+      <p>Batch / Department: ${esc(d.batch_or_department||"Not provided")}</p>
+      <p>Area: ${esc(d.area||"Not provided")}</p>
+      <p>Availability: ${esc(d.availability_status||"Not specified")}</p>
+      <p>Last donation: ${esc(d.last_blood_donation_date||"Not provided")}</p>
+      <p>Contact: ${d.phone_private?`<a href="tel:${esc(d.phone_private)}">${esc(d.phone_private)}</a>`:"Not available"}</p>
+    </div>`).join("");
 }
 
-async function changeDonorStatus(id, action) {
-  if (!await requireAdmin()) return;
-  if (!confirm("Are you sure you want to " + action + " this donor?")) return;
-
-  const functionName = action === "deactivate"
-    ? "admin_deactivate_donor"
-    : "admin_reactivate_donor";
-
-  const {error} = await db.rpc(functionName, {target_donor_id: id});
-  if (error) {
-    message("Donor status update failed: " + error.message);
+async function loadMyDonor(){
+  clearMsg();
+  const box=document.getElementById("myDonorBox");
+  box.innerHTML="";
+  if(!requireApproved())return;
+  const {data,error}=await db.from("donors")
+    .select("id,full_name,blood_group,area,phone_private,availability_status,last_blood_donation_date")
+    .eq("owner_user_id",currentUser.id).eq("active",true).limit(2);
+  if(error){box.textContent="Could not load your donor profile: "+error.message;return;}
+  if(!data||!data.length){
+    box.textContent="No donor record is linked to your account yet. Existing donor records are not automatically linked. Please contact the administrator to verify and link your record.";
     return;
   }
-  message("Donor status updated.");
-  await loadAdminDonors();
+  const d=data[0];
+  box.innerHTML=`
+    <div class="result">
+      <strong>${esc(d.full_name)}</strong>
+      <p>Blood group: ${esc(d.blood_group)}</p>
+      <label>Contact number</label>
+      <input id="editPhone" value="${esc(d.phone_private||"")}" maxlength="30">
+      <label>Area</label>
+      <input id="editArea" value="${esc(d.area||"")}" maxlength="150">
+      <label>Availability</label>
+      <select id="editAvailability">
+        <option value="Available" ${d.availability_status==="Available"?"selected":""}>Available</option>
+        <option value="Not Available" ${d.availability_status==="Not Available"?"selected":""}>Not Available</option>
+      </select>
+      <label>Last donation date</label>
+      <input id="editDonation" type="date" value="${esc(d.last_blood_donation_date||"")}">
+      <button onclick="saveMyDonor('${esc(d.id)}')">Save Changes</button>
+    </div>`;
+}
+async function saveMyDonor(id){
+  if(!requireApproved())return;
+  const patch={
+    phone_private:document.getElementById("editPhone").value.trim()||null,
+    area:document.getElementById("editArea").value.trim()||null,
+    availability_status:document.getElementById("editAvailability").value,
+    last_blood_donation_date:document.getElementById("editDonation").value||null
+  };
+  const {data,error}=await db.from("donors").update(patch)
+    .eq("id",id).eq("owner_user_id",currentUser.id).select("id");
+  if(error){msg("Profile update failed: "+error.message);return;}
+  if(!data||!data.length){msg("No record was updated. Check donor ownership and database permissions.");return;}
+  msg("Donor profile updated.");
+  await loadMyDonor();
 }
 
-async function deleteDonor(id, name) {
-  if (!await requireAdmin()) return;
-  if (!confirm("Permanently delete donor " + name + "? This cannot be undone.")) return;
-  if (!confirm("Final confirmation: permanently delete this donor?")) return;
-
-  const {error} = await db.rpc("admin_delete_donor", {target_donor_id: id});
-  if (error) {
-    message("Donor deletion failed: " + error.message);
-    return;
-  }
-  message("Donor permanently deleted.");
-  await loadAdminDonors();
-}
-
-db.auth.onAuthStateChange((event, session) => {
-  currentUser = session ? session.user : null;
-  if (event === "PASSWORD_RECOVERY") {
-    recoveryMode = true;
-    document.getElementById("password").required = false;
-    document.getElementById("password").value = "";
-    document.getElementById("password").placeholder = "Enter a new password";
-    const form = document.getElementById("loginForm");
-    let newPasswordButton = document.getElementById("newPasswordButton");
-    if (!newPasswordButton) {
-      newPasswordButton = document.createElement("button");
-      newPasswordButton.id = "newPasswordButton";
-      newPasswordButton.type = "button";
-      newPasswordButton.textContent = "Set New Password";
-      newPasswordButton.onclick = setNewPassword;
-      form.appendChild(newPasswordButton);
-    }
-    message("Enter a new password in the Password field, then press Set New Password.");
-  }
-  setTimeout(refreshAccess, 0);
+document.getElementById("requestForm").addEventListener("submit",async e=>{
+  e.preventDefault();clearMsg();
+  if(!requireApproved())return;
+  const needed=document.getElementById("reqTime").value;
+  const payload={
+    requester_user_id:currentUser.id,
+    requester_name:document.getElementById("reqName").value.trim(),
+    contact_phone:document.getElementById("reqPhone").value.trim(),
+    blood_group:document.getElementById("reqGroup").value,
+    units:Number(document.getElementById("reqUnits").value),
+    hospital:document.getElementById("reqHospital").value.trim(),
+    area:document.getElementById("reqArea").value.trim(),
+    needed_at:needed?new Date(needed).toISOString():null,
+    details:document.getElementById("reqDetails").value.trim()||null
+  };
+  const {error}=await db.from("blood_requests").insert(payload);
+  if(error){msg("Blood request failed: "+error.message);return;}
+  e.target.reset();
+  msg("Blood request submitted successfully.");
+  await loadRequests();
 });
 
-async function setNewPassword() {
-  const password = document.getElementById("password").value;
-  if (password.length < 6) {
-    message("Please enter a password with at least 6 characters.");
-    return;
-  }
-  const {error} = await db.auth.updateUser({password});
-  if (error) {
-    message("Password update failed: " + error.message);
-    return;
-  }
-  recoveryMode = false;
-  document.getElementById("password").required = true;
-  document.getElementById("password").placeholder = "";
-  message("Password updated successfully. You can now log in.");
+async function loadRequests(){
+  clearMsg();
+  const out=document.getElementById("requestResults");
+  out.innerHTML="";
+  if(!requireApproved())return;
+  const {data,error}=await db.from("blood_requests")
+    .select("id,requester_name,contact_phone,blood_group,units,hospital,area,needed_at,details,status,created_at")
+    .in("status",["open","in_progress"])
+    .order("created_at",{ascending:false}).limit(100);
+  if(error){out.textContent="Could not load requests: "+error.message;return;}
+  if(!data||!data.length){out.textContent="No open blood requests found.";return;}
+  out.innerHTML=data.map(r=>`
+    <div class="result">
+      <strong>${esc(r.blood_group)} · ${esc(r.units)} unit(s)</strong>
+      <p>Requester: ${esc(r.requester_name)}</p>
+      <p>Hospital: ${esc(r.hospital)} · Area: ${esc(r.area)}</p>
+      <p>Needed: ${esc(r.needed_at||"Time not specified")}</p>
+      <p>Details: ${esc(r.details||"None")}</p>
+      <p>Status: ${esc(r.status)}</p>
+      <p>Contact: <a href="tel:${esc(r.contact_phone)}">${esc(r.contact_phone)}</a></p>
+    </div>`).join("");
 }
 
-(async function init() {
-  const {data, error} = await db.auth.getSession();
-  if (error) {
-    message("Session check failed: " + error.message);
-    return;
+async function checkAdmin(){
+  if(!currentUser){msg("Sign in as an administrator first.");return false;}
+  const {data,error}=await db.from("member_access")
+    .select("approved,role").eq("user_id",currentUser.id).maybeSingle();
+  if(error||!data||!data.approved||data.role!=="admin"){
+    msg("Administrator permission required.");return false;
   }
-  currentUser = data.session ? data.session.user : null;
+  isAdmin=true;approvedMember=true;
+  return true;
+}
+async function loadPendingMembers(){
+  if(!await checkAdmin())return;
+  const out=document.getElementById("pendingMembers");
+  out.textContent="Loading...";
+  const {data,error}=await db.from("member_access")
+    .select("user_id,display_name,member_category,batch_or_department,role,approved,created_at")
+    .eq("approved",false).order("created_at",{ascending:true}).limit(100);
+  if(error){out.textContent="Could not load members: "+error.message;return;}
+  if(!data||!data.length){out.textContent="No pending members.";return;}
+  out.innerHTML=data.map(m=>`
+    <div class="result">
+      <strong>${esc(m.display_name||"Name not provided")}</strong>
+      <p>Category: ${esc(m.member_category)} · Batch/Department: ${esc(m.batch_or_department||"Not provided")}</p>
+      <p class="small">User ID: ${esc(m.user_id)}</p>
+      <button onclick="reviewMember('${esc(m.user_id)}',true)">Approve</button>
+      <button class="danger" onclick="reviewMember('${esc(m.user_id)}',false)">Reject / Revoke approval</button>
+    </div>`).join("");
+}
+async function reviewMember(id,approve){
+  if(!await checkAdmin())return;
+  if(!confirm((approve?"Approve":"Reject")+" this member?"))return;
+  const {error}=await db.rpc("admin_review_member",{
+    target_user_id:id,approve_member:approve
+  });
+  if(error){msg("Member review failed: "+error.message);return;}
+  msg(approve?"Member approved.":"Member approval revoked.");
+  await loadPendingMembers();
+}
+async function promoteMember(){
+  if(!await checkAdmin())return;
+  const id=document.getElementById("promoteUserId").value.trim();
+  if(!id){msg("Enter the existing member's UUID.");return;}
+  if(!confirm("Promote this existing member to Admin? Only do this for a trusted person."))return;
+  const {error}=await db.rpc("admin_promote_member",{target_user_id:id});
+  if(error){msg("Admin promotion failed: "+error.message);return;}
+  document.getElementById("promoteUserId").value="";
+  msg("Admin role granted successfully.");
+}
+
+async function loadAdminDonors(){
+  if(!await checkAdmin())return;
+  const out=document.getElementById("adminDonors");
+  out.textContent="Loading donors...";
+  const includeInactive=document.getElementById("adminDonorFilter").value==="true";
+  const {data,error}=await db.rpc("admin_list_donors",{include_inactive:includeInactive});
+  if(error){out.textContent="Could not load donors: "+error.message;return;}
+  if(!data||!data.length){out.textContent="No donors found.";return;}
+  out.innerHTML=data.map(d=>`
+    <div class="result">
+      <strong>${esc(d.full_name)}</strong>
+      <p>${esc(d.blood_group)} · ${esc(d.phone_private||"No phone")}</p>
+      <p>${esc(d.area||"No area")} · ${d.active?"Active":"Inactive"}</p>
+      ${d.active
+        ?`<button class="secondary" onclick="changeDonor('${esc(d.id)}','deactivate')">Deactivate</button>`
+        :`<button onclick="changeDonor('${esc(d.id)}','reactivate')">Reactivate</button>`}
+      <button class="danger" onclick="deleteDonor('${esc(d.id)}','${esc(d.full_name)}')">Permanently Delete</button>
+    </div>`).join("");
+}
+async function changeDonor(id,action){
+  if(!await checkAdmin())return;
+  if(!confirm("Are you sure you want to "+action+" this donor?"))return;
+  const fn=action==="deactivate"?"admin_deactivate_donor":"admin_reactivate_donor";
+  const {error}=await db.rpc(fn,{target_donor_id:id});
+  if(error){msg("Donor update failed: "+error.message);return;}
+  msg("Donor status updated.");
+  await loadAdminDonors();
+}
+async function deleteDonor(id,name){
+  if(!await checkAdmin())return;
+  if(!confirm("Permanently delete "+name+"? This cannot be undone."))return;
+  if(!confirm("Final confirmation: permanently delete this donor?"))return;
+  const {error}=await db.rpc("admin_delete_donor",{target_donor_id:id});
+  if(error){msg("Donor deletion failed: "+error.message);return;}
+  msg("Donor deleted.");
+  await loadAdminDonors();
+}
+
+db.auth.onAuthStateChange((event,session)=>{
+  currentUser=session?session.user:null;
+  if(event==="PASSWORD_RECOVERY"){
+    recoveryMode=true;
+    document.getElementById("recoveryBox").classList.remove("hidden");
+    msg("Enter your new password in the password reset section.");
+  }
+  setTimeout(refreshAccess,0);
+});
+
+(async function init(){
+  const {data,error}=await db.auth.getSession();
+  if(error){msg("Session check failed: "+error.message);return;}
+  currentUser=data.session?data.session.user:null;
   await refreshAccess();
 })();
 </script>
